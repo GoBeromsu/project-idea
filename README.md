@@ -26,10 +26,13 @@
 
 **Project IDEA** is an agentic personal knowledge library built for researchers and engineers reading dense technical literature (focused on **LLM Inference & Serving**). Instead of dumping unverified summaries into a static note vault, Project IDEA connects new primary sources to your existing canonical knowledge, enforces **deterministic mechanical quote verification**, surfaces **semantic conflicts**, and stages **human-in-the-loop Knowledge Diffs (`ChangeSet`)** before updating your session's Living Wiki.
 
-Everything happens inside a single continuous WebGL scene driven by one unified prompt:
-- **Left Portal (`Black Hole`, $X = -22$)**: Primary source ingestion anchor where raw URLs and technical documents enter after passing SSRF and content-type guardrails.
-- **Center Space (`3-Ring Rotating Semantic Orbits`, $X = -12 \dots +12$)**: Multi-ring 3D orbital layers (`Domain Terms`, `Canonical Concepts`, `Grounded Claims`) aligning `TERM`, `CONCEPT`, `ENTITY`, and `CLAIM` nodes against existing session knowledge.
-- **Right Portal (`White Hole`, $X = +22$)**: Output portal where human-approved `ChangeSet` mutations emerge into the active **Living Wiki** for immediate reuse in follow-up session queries.
+Everything happens inside a single continuous **Dark 3D Knowledge Constellation** WebGL scene (`#05070F` deep cosmic void) driven by one unified prompt:
+- **Left Portal (`Black Hole`, $X = -22$)**: Pitch-black event horizon with multi-layer cyan/violet accretion disks and an inward particle vortex where raw URLs and source documents enter after passing SSRF and content-type guardrails.
+- **Center Space (`3 Stratified Orbital Layers`, $X = -7.5 \dots +7.5$)**:
+  - **Ring 1 (`Terms & Jargon`, $X = -7.5$, Electric Cyan `#38BDF8`)**: Domain acronyms and technical vocabulary rendered as luminous octahedra.
+  - **Ring 2 (`Concepts & Entities`, $X = 0.0$, Celestial Blue `#60A5FA` & Violet `#A78BFA`)**: Canonical concepts (spheres/icosahedra) and named entities (faceted prisms) where synonym alignment (`MATCH`) and novel proposals (`PROPOSE`) occur.
+  - **Ring 3 (`Grounded Claims`, $X = +7.5$, Indigo-Teal `#818CF8` / `#2DD4BF`)**: Atomic factual statements backed by verbatim source quotes, rendered as ringed torus cores.
+- **Right Portal (`White Hole`, $X = +22$)**: Radiant cyan-white synthesis core with counter-rotating harmonic rings where human-approved `ChangeSet` mutations crystallize into the session's **Living Wiki** for immediate reuse in follow-up queries.
 
 ---
 
@@ -98,19 +101,27 @@ flowchart LR
 
 ## 🎨 Spatial Interface & Epistemic Design (`DESIGN.md`)
 
-Project IDEA pairs a high-craft light-mode scientific workspace (`#F7F9FC` canvas with Google-inspired `#4285F4` Blue, `#EA4335` Red, `#FBBC05` Yellow, `#34A853` Green accents) with a continuous left-to-right 3D WebGL scene (`IdeaSceneManager`):
+Project IDEA adopts a **Dark 3D Knowledge Constellation** aesthetic (`#05070F` deep cosmic void, translucent dark-glass HUD panels `rgba(9, 14, 28, 0.84)`, and restrained **Cyan `#38BDF8`**, **Blue `#60A5FA`**, **Violet `#A78BFA`**, and **Teal `#2DD4BF`** luminescence) inside a single continuous Three.js WebGL scene (`IdeaSceneManager`):
 
 ```text
-IDEA                                               Session only · execution status
+[ Left: BLACK HOLE (x = -22) ]  ───►  [ Center: ROTATING SEMANTIC SPACE (x = -7.5 .. +7.5) ]  ───►  [ Right: WHITE HOLE (x = +22) ]
+   Raw URL / Source Ingestion           Ring 1: Terms (-7.5) · Ring 2: Concepts (0) · Ring 3: Claims (+7.5)      Approved Living Wiki Output
 
-[ BLACK HOLE ]  ⇢  [ Terms / Knowledge Orbits + Existing Nodes ]  ⇢  [ WHITE HOLE ]
-  Source URL            candidates · evidence · relations             Wiki changes
-  (X = -22)           3 Tilted Rings (X = -12 to +12)                  (X = +22)
+                     [ Non-Occluding Card (#overlay-card): Query Answer · Node Evidence · Knowledge Diff ]
 
-                     [ Answer / Selected Node / Review Card ]
-
-                 [ One prompt: question or URL + question        → ]
+                 [ Unified Prompt Composer (#prompt-dock): Question, Public URL, or URL + Question  → ]
 ```
+
+### Spatial & Interactive Highlights
+- **3 Stratified Orbital Planes & Provenance Particles**:
+  - **Ring 1 (`x = -7.5`, Electric Cyan `#38BDF8`)**: `TERM` octahedra with star-glow halos.
+  - **Ring 2 (`x = 0.0`, Celestial Blue `#60A5FA` & Violet `#A78BFA`)**: `CONCEPT` icosahedra/spheres and `ENTITY` faceted prisms.
+  - **Ring 3 (`x = +7.5`, Indigo-Teal `#818CF8` / `#2DD4BF`)**: `CLAIM` ringed torus cores backed by verbatim quotes.
+  - **Pending vs. Conflict Visuals**: Unapproved `PROPOSED` nodes pulse in **Amber (`#F59E0B`)** wireframe shells tethered to the Black Hole; `UNRESOLVED` conflicts pulse in **Crimson Rose (`#F43F5E`)**.
+  - **Directional Particle Flow (`emit-particles`) & `click-to-focus`**: Travelling light pulses flow along constellation filaments from `Black Hole → Terms → Concepts → Claims → White Hole`. Clicking any 3D node smoothly interpolates (`lerp`) the camera toward the node and its 1-hop neighborhood while pausing ambient rotation.
+- **Non-Occluding Dark-Glass HUD (`#overlay-card`) & Constellation Lenses**:
+  - Top bar provides live pipeline stage telemetry and 1-click **Constellation Lenses** (`All`, `Terms`, `Concepts`, `Claims`, `Pending`).
+  - Centered floating overlay (`width: min(660px, calc(100vw - 380px))`) leaves $\ge 190\text{px}$ of open canvas on both sides so **neither the left Black Hole nor the right White Hole is ever occluded**, unifying three tabs: **Query Answer (`#view-answer`)**, **Node Evidence (`#view-node`)**, and **Knowledge Diff (`#view-diff`)**.
 
 ### Epistemic Verification Badges (Zero Conflation)
 
@@ -136,7 +147,7 @@ Project IDEA never collapses source existence, model opinion, objective truth, a
 | `Align` | Highlights matched canonical nodes (`MATCH`) and renders candidate proposals (`PROPOSE`) with dashed links. |
 | `Verify / Repair` | Displays real-time mechanical quote check status and Turn-2 Argon self-correction (`previous_interaction_id`). |
 | `Review` | Pauses orbit rotation for readable side-by-side Source vs. Proposed Diff inspection without occluding the White Hole. |
-| `Apply` | Commits user-selected valid changes while preventing duplicate submission clicks. |
+| `Apply` | Commits user-selected valid changes with cyan/teal assimilation particle bursts while preventing duplicate submission clicks. |
 | `Complete` | Emerges approved Wiki updates through the right White Hole portal and enables follow-up session queries. |
 | `Unresolved / Error` | Preserves existing session knowledge untouched and explains exact mechanical, network, or conflict reasons. |
 
@@ -163,31 +174,32 @@ Out of the box, `seed_domain.json` initializes a curated ontology and grounded c
 
 ```text
 project-idea/
-├── frontend/                     # Tier 1: WebGL Spatial UI & Diff Inspector (:3000)
-│   ├── index.html                # Single-screen spatial canvas, collapsible overlay cards & unified prompt
-│   ├── scene_physics.js          # Three.js Left-to-Right portals, 3-ring orbital physics & raycast engine
-│   ├── app.js                    # Stateful session client, trace highlighting & ChangeSet review controller
+├── frontend/                     # Tier 1: Dark 3D Knowledge Constellation WebGL UI (:3000)
+│   ├── index.html                # Dark-glass HUD, Constellation Lenses, 3-tab overlay card & prompt dock
+│   ├── scene_physics.js          # Three.js Black/White Hole portals, 3-ring orbits, particles & click-to-focus
+│   ├── app.js                    # Stateful session client, lens filter, trace highlighting & selective diff review
 │   └── server.py                 # Standalone FastAPI frontend server injecting window.BACKEND_API_URL
 ├── backend/                      # Tier 2: Ingestion, KnowledgeStore & Guardrails (:8000)
 │   ├── schemas.py                # Shared Pydantic v2 contracts (Concept, FactClaim, ChangeSet, QueryResponse)
 │   ├── store.py                  # Session Knowledge Graph, Living Wiki & ChangeSet state manager
 │   ├── ingest.py                 # SSRF-safe public URL fetcher, binary guard & section anchor extractor
 │   ├── model_client.py           # Async httpx client orchestrating the multi-turn Model Tier REST loop
-│   ├── server.py                 # Backend FastAPI routes (/api/state, /api/assimilate, /api/changesets/*)
+│   ├── server.py                 # Backend FastAPI routes (/api/state, /api/query, /api/assimilate, /api/changesets/*)
 │   └── seed_domain.json          # Canonical LLM Inference & Reasoning seed ontology
 ├── model/                        # Tier 3: Gemini 4 Argon Agent & Mechanical Validator (:8001)
 │   ├── schemas.py                # Extraction, verification & multi-turn self-correction schemas
 │   ├── validator.py              # Deterministic verbatim quote & referential integrity validator
 │   ├── agent_loop.py             # AssimilationEngine (Gemini 4 Argon Interactions API Turn 1 & Turn 2)
-│   └── server.py                 # Model Tier FastAPI service (/api/v1/extract, /verify-quote, /correct)
+│   └── server.py                 # Model Tier FastAPI service (/api/v1/query, /extract, /verify-quote, /correct)
 ├── scripts/
-│   ├── eval_harness.py           # 3-scenario live Gemini 4 Argon evaluation benchmark
+│   ├── eval_harness.py           # 5-scenario live Gemini 4 Argon evaluation benchmark (AC-02 to AC-10)
 │   ├── verify_argon.py           # Interactions API connectivity & thinking summary smoke test
 │   └── lint_no_comments.py       # AST & tokenizer linter enforcing zero comments/docstrings across Py/JS/HTML
 ├── tests/
-│   ├── test_3tier_rest_loop.py   # End-to-end 3-Tier multi-turn self-correction integration test
-│   ├── test_server.py            # Backend API state & approval lifecycle tests
-│   └── test_validator.py         # Deterministic quote & referential integrity unit tests
+│   ├── test_3tier_rest_loop.py   # End-to-end 3-Tier multi-turn repair & Golden Path integration tests
+│   ├── test_server.py            # SSRF/binary guard, selective approval idempotency & blocked-claim tests
+│   ├── test_validator.py         # Deterministic quote & referential integrity unit tests
+│   └── test_ingest.py            # Deterministic HTML parsing & section anchor extraction unit tests
 ├── .pre-commit-config.yaml       # Local pre-commit hooks (lint_no_comments.py + ruff check)
 ├── PRD.md                        # Product Requirements Document (v0.7 — Product outcomes first)
 ├── DESIGN.md                     # Spatial UI, color tokens, typography & interaction specification
