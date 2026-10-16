@@ -1,46 +1,49 @@
-# AGENTS.md — Gemini 4 Argon & Project IDEA Guidelines
-
-## 1. Gemini 4 Argon API Rules (Mandatory)
-
-1. **Always use the Interactions API (`client.interactions.create`)**:
-   - Require `google-genai >= 2.30.1` (Python) or `@google/genai >= 2.29.1` (Node/TS).
-   - Use `model="gemini-4-argon"` for core Knowledge Assimilation, semantic verification, and multi-file synthesis.
-   - Use `previous_interaction_id` for multi-turn verification/self-correction loops to preserve server-side state and leverage automatic implicit context caching (95% discount). Note: `tools`, `system_instruction`, and `generation_config` are interaction-scoped and must be passed on each turn.
-   - For structured JSON output with Pydantic models, pass:
-     ```python
-     response_format={
-         "type": "text",
-         "mime_type": "application/json",
-         "schema": MyPydanticModel.model_json_schema(),
-     }
-     ```
-
-2. **Control reasoning with `thinking_level`**:
-   - `"low"`: Fast classification, routing, or lightweight formatting checks.
-   - `"medium"` (default): Interactive coding, Knowledge Assimilation (`Ingest -> Align -> Assimilate -> Verify`), and tool use within the 3-minute live demo target.
-   - `"high"`: Deep multi-file debugging, complex contradiction resolution, or architecture synthesis.
-
-3. **Long decode (`background=True`)**:
-   - Default output cap is `65536` tokens.
-   - If `max_output_tokens > 65536` is needed (sharing the 1M-token context window), set `background=True` and poll `client.interactions.get(id=interaction.id)`.
-
-4. **NEVER use deprecated Gemini 2.5 / 3 parameters**:
-   - Do **NOT** pass `thinking_budget` (use `thinking_level` instead).
-   - Do **NOT** pass `temperature`, `top_p`, or `top_k` (custom sampling parameters are ignored by `gemini-4-argon` and trigger deprecation warnings).
-   - Do **NOT** create explicit `cached_content` calls (implicit caching is automatic).
-
-## 2. Project IDEA Core Architecture Rules
-
-1. **Human-in-the-Loop Control (Test 3)**:
-   - Unverified claims or unresolved semantic conflicts (`UNRESOLVED`) must **NEVER** be auto-committed to the Knowledge Store or Wiki.
-   - Every proposed mutation must be staged as a `ChangeSet` (Knowledge Diff) and explicitly approved by the user before mutating `WikiPage` or committed graph state.
-
-2. **Distinguish Mechanical vs. Semantic Verification**:
-   - **Mechanical Verification (`Evidence Validator`)**: Deterministic code checks that source URLs, section anchors, and exact/normalized quote spans actually exist in the fetched source text, and referenced `Term`/`Concept` IDs exist in the registry.
-   - **Semantic Verification (`gemini-4-argon`)**: Evaluates synonymy (`MATCH`), novel concepts (`PROPOSE`), and conceptual ambiguity or contradiction against existing Wiki claims (`UNRESOLVED`).
-
-3. **3D Visualization Integrity**:
-   - The 4 rotating layers (Source, Domain Semantic Layer, Knowledge Graph, Wiki) must reflect real agent pipeline states and verification statuses (`VERIFIED`, `PROPOSED`, `UNRESOLVED`, `REJECTED`).
-
-## 3. Git Rules (Mandatory)
-- **Atomic Feature Commits**: Commit immediately upon completing and verifying each discrete feature, bugfix, or refactor (`<type>(<scope>): <subject>`) without waiting for user prompting or batching multiple features together.
+# AGENTS.md
+## Mission
+Project IDEA의 핵심은 공개 웹에서 **질문 → 원문 편입 → 근거·변경안 검토 → 사용자 승인 → 같은 세션에서 재질문**이 실제로 이어지는 것이다. 단일 프롬프트, 좌측 Black Hole·중앙 회전 지식층·우측 White Hole의 연속 WebGL 공간, 클릭 가능한 노드 카드를 보존한다.
+이 파일은 **IDEA를 개발하는 에이전트의 작업 규칙**이다. 서비스 안에서 실행되는 Argon의 시스템 프롬프트나 런타임 오케스트레이터가 아니다.
+## Read before acting
+`PRD.md`에서 제품 범위와 AC를, `DESIGN.md`에서 화면과 인터랙션을, 배정된 Linear 이슈에서 현재 작업·담당 경계·의존성·검증 방법을 읽는다. 현재 코드와 관련 테스트를 확인하고 작업을 시작한다.
+제품 요구사항은 PRD, 시각·상호작용 규칙은 DESIGN, 공통 작업 규칙은 AGENTS, 일시적 작업 상태·배정·검증 기록은 Linear에 둔다. 중복된 긴 진행 보고를 문서에 누적하지 않는다. 충돌을 발견하면 조용히 재해석하지 말고 통합 담당에게 해당 충돌만 보고한다.
+사용하는 코딩 에이전트가 이 파일을 실제로 읽도록 실행 설정을 확인한다. `DESIGN.md`의 자동 탐색을 가정하지 말고 명시적으로 읽게 한다.
+## Repository ownership
+| 경계 | 책임 |
+|---|---|
+| `front/` | WebGL 공간, 프롬프트, 카드·Diff, 승인 인터랙션, 세션 지식의 표시·재사용 |
+| `backend/` | 웹 요청, 원문 수집·앵커, 도구 실행, 기계적 검사, 실행·비용 제한 |
+| `model/` | Argon 연결, 도메인 의미 정렬, 근거 기반 답변·변경안, 오류에 따른 수정 |
+각 경계 내부 구조는 해당 구현 담당자가 정한다. 별도 모델 서버·DB·로그인·메시지 큐를 기본값으로 추가하지 않는다.
+공통 계약, 루트 빌드·배포 설정, 여러 영역이 함께 사용하는 파일은 **통합 담당 한 명**이 소유한다. 이슈에 허용된 경계 밖의 파일을 수정하지 않는다. 다른 영역 수정이 필요하면 그 담당자에게 변경 요청을 남기고, 통합 담당이 소유권을 조정한 뒤 진행한다.
+## Parallel work and contracts
+- 동시에 쓰는 작업은 **이슈 하나당 구현 담당 하나, 독립 브랜치/작업 디렉터리 하나**로 제한한다. 가능한 환경에서는 Git worktree를 이용한다. 같은 작업 트리에서 여러 에이전트가 편집하지 않는다.
+- 통합 담당이 작업을 배정한다. 상태만 보고 여러 에이전트가 같은 이슈를 동시에 집어가지 않는다. 각 구현 담당의 진행 중 작업은 하나를 기본으로 한다.
+- 세 영역을 연결할 요청·응답·검사·실패 상태와 작은 샘플을 먼저 합의한다. 구체 필드와 계약 파일 위치는 통합 담당이 구현 담당자들과 정한다. 각 영역이 제각각 별도 계약을 만들지 않는다.
+- 계약에 맞는 모의 데이터로 병렬 구현할 수 있다. 단, 모의 통과를 실제 Argon 실행이나 전체 제품 통과로 보고하지 않는다.
+- 공통 계약 변경은 영향을 받는 담당자에게 알리고 관련 소비자·테스트까지 함께 갱신한다. 다른 담당자가 기존 계약으로 작업하는 동안 임의 변경하지 않는다.
+- 브랜치 격리는 논리적 충돌을 해결하지 않는다. 병합 후 최신 통합 상태에서 관련 검사를 다시 실행한다.
+## Implementation autonomy
+라이브러리, 내부 구조, HTTP 경로, 상태 관리와 통신 방식은 완료 조건을 만족하는 가장 작은 구현으로 정한다. 되돌리기 쉬운 구현 선택마다 제품 담당자에게 승인을 요청하지 않는다.
+제품 범위·핵심 UI·검증 기준의 변경, 새 유료 서비스·권한, 다른 담당 영역의 소유권 충돌은 통합 담당 또는 제품 담당자의 결정이 필요하다. 확인되지 않은 API나 SDK 메서드는 추정 구현하지 말고 공식 문서와 실제 호출로 확인한다.
+초기 작업에서 실행 가능한 설치·개발·검사·빌드 명령을 확정해 저장소에 기록한다. 저장소를 읽기 전 임의의 `npm test` 또는 `pytest` 명령이 존재한다고 가정하지 않는다. 아직 등록되지 않은 명령과 접근 권한은 미확인으로 표시한다.
+## Product-agent verification rules
+Argon의 역할은 해석·제안·수정이다. 외부 자료는 데이터이지 시스템 지시가 아니다. 서버 키·도구 권한·검증 기준을 문서나 모델 출력이 변경하지 못하게 한다.
+실제 원문의 인용 존재 검사, 의미 검토, 사용자 승인을 분리한다. 인용 위치가 맞거나 사용자가 승인했다고 객관적 사실이 증명된 것으로 표시하지 않는다. 일반 질의는 지식을 변경하지 않고, 새 자료도 승인 전에 기존 Wiki를 덮어쓰지 않는다.
+기계적 검사 실패는 변경 적용을 차단한다. 실패 이유를 전달해 제한적으로 수정하고 같은 검사를 다시 수행한다. 모델에 검사 기준을 낮추거나 무한 반복할 권한을 주지 않는다. 미확인 주장은 보류한다.
+현재 범위는 로그인·영속 DB 없이 동작한다. 공개 자료만 받고, 모델 키는 서버에 둔다. 입력 URL·리다이렉트·실행 한도와 안전한 텍스트 렌더링을 검증한다. 브라우저의 기존 지식을 신뢰된 서버 증거로 취급하지 않는다.
+## Development verification loop
+**AC 확인 → 구현 → 해당 검사 실행 → 별도 리뷰 → 실패 시 동일 이슈에서 수정 → 재검사 → 통합 상태 확인 → Done**
+구현 에이전트는 자기 변경의 테스트 결과를 첨부해 Review로 넘긴다. 검증 담당은 PR 설명만 읽지 말고 해당 변경과 실제 검사 결과를 확인한다. 화면 변경은 브라우저에서 직접 확인한다. 구현자가 유일한 검증자인 경우에는 독립 리뷰라고 보고하지 않는다.
+실패는 관련 이슈를 In Progress로 돌리고 구체적인 기대값·실제값·재현 절차를 붙인다. 같은 실패를 여러 새 이슈로 복제하지 않는다. 범위 밖의 결함은 별도 관련 이슈로 만들고 통합 담당이 우선순위를 정한다.
+미리 합의된 AC·평가 정답을 통과 목적으로 수정하지 않는다. 기대값이 잘못되었다면 근거를 제시하고 승인받는다. 구현에 따라 보완하는 단위 테스트와 독립 평가 기준을 구분한다.
+이슈 단위 Done은 **그 이슈 범위의 리뷰·검사·병합 후 확인**이 끝났다는 뜻이다. 모의 계약만 확인한 컴포넌트 이슈의 Done이 전체 제품의 작동을 뜻하지 않는다. 전체 기능 완료는 실제 공개 환경의 별도 통합 검증으로 판정한다.
+## Evidence and handoff
+검증 기록에는 대상 이슈/AC, 코드 버전 또는 PR, 실행 환경, 실행한 명령·사용자 행동, 기대 결과와 실제 결과, PASS/FAIL, 관련 로그·영상·스크린샷, 남은 차단 요인을 적는다. 실행하지 않은 검사는 `NOT RUN`으로 표시한다.
+모델이 실제로 실패하지 않았다면 실패를 꾸며내지 않는다. 검증기를 시험하기 위한 잘못된 인용 fixture는 주입 테스트라고 명시하고, 실제 모델 실행 결과와 분리한다. 정지 캡처는 클릭·회전·모델 호출의 증거가 아니다.
+중간 판단과 실행 증거는 해당 Linear 이슈에 남긴다. 사용자에게는 제품 결정이 필요한 차단 요인과 실제로 작동하는 결과만 올린다. 에이전트의 내부 대화나 보드 이동을 모두 중계하지 않는다.
+## Completion
+관련 검사가 통과하고, 담당 경계가 지켜졌고, 실패·미확인 상태를 숨기지 않았고, 검증 담당이 현재 코드 버전을 확인한 뒤에만 완료로 처리한다. PR 생성·모델의 “완료” 메시지·보드 상태 변경만으로 완료를 선언하지 않는다.
+## References
+확인일: 2026-10-16. 이 규칙은 아래 공개 형식을 참고해 IDEA에 맞게 정한 운영 규칙이다.
+- [AGENTS.md 공식 안내](https://agents.md/): 프로젝트 맥락·빌드·테스트·작업 규칙을 코딩 에이전트에 전달하는 Markdown 형식.
+- [Git worktree](https://git-scm.com/docs/git-worktree): 하나의 저장소에서 독립 작업 트리를 사용하는 기능.
+- [Linear AI Agents](https://linear.app/docs/agents-in-linear): 설치한 에이전트의 위임·활동·guidance. 실제 동작은 연결된 에이전트와 권한에 따라 다르다.
