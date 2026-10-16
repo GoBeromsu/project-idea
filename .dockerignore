@@ -1,0 +1,25 @@
+# Virtual environments & caches
+.venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Git & IDE metadata
+.git/
+.gitignore
+.github/
+.agents/
+.vscode/
+.idea/
+
+# Secrets & local env
+.env
+.env.*
+
+# Documentation & local artifacts
+*.log
+.DS_Store

@@ -1,3 +1,9 @@
+const API_BASE = (
+    window.BACKEND_API_URL ||
+    new URLSearchParams(window.location.search).get("api") ||
+    ""
+).replace(/\/$/, "");
+
 let scene, camera, renderer, controls;
 let nodes = [];
 let lines = [];
@@ -38,7 +44,7 @@ function init3D() {
     const mouse = new THREE.Vector2();
 
     window.addEventListener("click", (e) => {
-        if (e.target.closest(".glass-panel") || e.target.closest("button") || e.target.closest("input")) return;
+        if (e.target.closest(".glass-panel") || e.target.closest("button") || e.target.closest("input") || e.target.closest("textarea")) return;
         mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
@@ -87,14 +93,25 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// Fetch and render state
+// Fetch and render state from Backend REST API
 async function fetchState() {
     try {
-        const res = await fetch("/api/state");
+        const res = await fetch(`${API_BASE}/api/state`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         renderGraph(data);
+        const dot = document.getElementById("tier-status-dot");
+        if (dot) {
+            dot.classList.remove("bg-rose-500");
+            dot.classList.add("bg-emerald-400");
+        }
     } catch (err) {
-        console.error("Failed to load state", err);
+        console.error("Failed to load state from Backend REST API", err);
+        const dot = document.getElementById("tier-status-dot");
+        if (dot) {
+            dot.classList.remove("bg-emerald-400");
+            dot.classList.add("bg-rose-500");
+        }
     }
 }
 
@@ -110,7 +127,7 @@ function renderGraph(state) {
 
     // Concept positioning
     concepts.forEach((c, i) => {
-        const angle = (i / concepts.length) * Math.PI * 2;
+        const angle = (i / Math.max(1, concepts.length)) * Math.PI * 2;
         const radius = 9;
         const yPos = c.layer === "domain" ? -4 : 4;
         const x = Math.cos(angle) * radius;
@@ -213,13 +230,17 @@ async function triggerAssimilate() {
     statusMsg.textContent = "Argon Turn 1: Extracting & Mechanical Verifying...";
 
     try {
-        const res = await fetch("/api/assimilate", {
+        const res = await fetch(`${API_BASE}/api/assimilate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title, text })
         });
         const data = await res.json();
-        renderChangeSet(data.changeset);
+        if (!res.ok) {
+            throw new Error(data.detail || `HTTP ${res.status}`);
+        }
+        const trace = data.pipeline_trace || (data.changeset && data.changeset.pipeline_trace) || null;
+        renderChangeSet(data.changeset, trace);
         fetchState();
     } catch (err) {
         alert("Assimilation error: " + err.message);
@@ -230,13 +251,103 @@ async function triggerAssimilate() {
     }
 }
 
-function renderChangeSet(cs) {
+function renderPipelineTraceCard(pipelineTrace) {
+    if (!pipelineTrace) return "";
+
+    const turn1Id =
+        pipelineTrace.turn1_interaction_id ||
+        pipelineTrace.interaction_id ||
+        pipelineTrace.turn_1_interaction_id ||
+        "int_argon_turn1";
+
+    const selfCorrected = Boolean(
+        pipelineTrace.self_corrected ||
+        pipelineTrace.turn2_triggered ||
+        pipelineTrace.turn2_interaction_id ||
+        pipelineTrace.turn_2_interaction_id ||
+        (typeof pipelineTrace.mechanical_verification === "string" &&
+            pipelineTrace.mechanical_verification.toUpperCase().includes("SELF"))
+    );
+
+    const verificationBadgeClass = selfCorrected
+        ? "bg-amber-950 text-amber-300 border-amber-700"
+        : "bg-emerald-950 text-emerald-300 border-emerald-700";
+    const verificationBadgeText = selfCorrected
+        ? "SELF-CORRECTED (Turn 2)"
+        : "PASSED";
+
+    const turn2Id =
+        pipelineTrace.turn2_interaction_id ||
+        pipelineTrace.turn_2_interaction_id ||
+        null;
+
+    const rawThoughts =
+        pipelineTrace.thought_summaries ||
+        pipelineTrace.thoughts ||
+        [];
+    const thoughtList = Array.isArray(rawThoughts)
+        ? rawThoughts.filter(Boolean)
+        : (rawThoughts ? [String(rawThoughts)] : []);
+
+    let thoughtsHtml = "";
+    if (thoughtList.length > 0) {
+        thoughtsHtml = `
+            <div class="pt-2 border-t border-slate-800/80 space-y-1">
+                <span class="text-[10px] font-semibold uppercase tracking-wider text-indigo-300 block">
+                    <i class="fa-solid fa-brain mr-1"></i>Argon Thought Summaries
+                </span>
+                <ul class="space-y-1 text-[11px] text-slate-300 list-disc list-inside bg-slate-950/70 p-2 rounded-lg border border-slate-800/80">
+                    ${thoughtList.map(t => `<li class="leading-relaxed">${t}</li>`).join("")}
+                </ul>
+            </div>
+        `;
+    }
+
+    return `
+        <div id="pipeline-trace-card" class="p-3 rounded-xl bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-indigo-950/40 border border-indigo-500/30 space-y-2 shadow-lg">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-400 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-network-wired"></i>
+                    <span>3-Tier REST Agent Loop Trace</span>
+                </span>
+                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-800">
+                    ${pipelineTrace.model || "gemini-4-argon"}
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 gap-1.5 text-[11px]">
+                <div class="flex items-center justify-between bg-slate-950/60 px-2.5 py-1.5 rounded-lg border border-slate-800/80">
+                    <span class="text-slate-400">Turn 1 Interaction ID</span>
+                    <span class="font-mono text-[10px] text-cyan-300">${turn1Id}</span>
+                </div>
+                <div class="flex items-center justify-between bg-slate-950/60 px-2.5 py-1.5 rounded-lg border border-slate-800/80">
+                    <span class="text-slate-400">Mechanical Quote Verification</span>
+                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${verificationBadgeClass}">
+                        ${verificationBadgeText}
+                    </span>
+                </div>
+                ${turn2Id ? `
+                <div class="flex items-center justify-between bg-slate-950/60 px-2.5 py-1.5 rounded-lg border border-amber-800/50">
+                    <span class="text-amber-300/90">Turn 2 (previous_interaction_id)</span>
+                    <span class="font-mono text-[10px] text-amber-300">${turn2Id}</span>
+                </div>
+                ` : ""}
+            </div>
+            ${thoughtsHtml}
+        </div>
+    `;
+}
+
+function renderChangeSet(cs, pipelineTrace = null) {
     currentChangeSetId = cs.id;
     const container = document.getElementById("diff-content");
     const actions = document.getElementById("diff-actions");
     actions.classList.remove("hidden");
 
-    let html = `
+    const effectiveTrace = pipelineTrace || cs.pipeline_trace || null;
+    let html = renderPipelineTraceCard(effectiveTrace);
+
+    html += `
         <div class="p-3 bg-slate-900/90 rounded-xl border border-cyan-800/40">
             <h4 class="font-bold text-slate-200 text-xs flex items-center justify-between">
                 <span>${cs.source_title}</span>
@@ -246,7 +357,7 @@ function renderChangeSet(cs) {
     `;
 
     // Proposed Concepts
-    if (cs.proposed_concepts.length > 0) {
+    if (cs.proposed_concepts && cs.proposed_concepts.length > 0) {
         html += `<div class="space-y-1.5"><span class="text-[11px] font-semibold text-slate-400 uppercase">Aligned Concepts</span>`;
         cs.proposed_concepts.forEach(c => {
             const badge = c.status === "VERIFIED" ? "bg-emerald-950 text-emerald-300 border-emerald-800" : "bg-amber-950 text-amber-300 border-amber-800";
@@ -264,7 +375,7 @@ function renderChangeSet(cs) {
     }
 
     // Proposed Claims
-    if (cs.proposed_claims.length > 0) {
+    if (cs.proposed_claims && cs.proposed_claims.length > 0) {
         html += `<div class="space-y-1.5"><span class="text-[11px] font-semibold text-slate-400 uppercase">Proposed Living Wiki Claims</span>`;
         cs.proposed_claims.forEach(cl => {
             html += `
@@ -280,7 +391,7 @@ function renderChangeSet(cs) {
     }
 
     // Unresolved Conflicts
-    if (cs.unresolved_conflicts.length > 0) {
+    if (cs.unresolved_conflicts && cs.unresolved_conflicts.length > 0) {
         html += `<div class="space-y-1.5"><span class="text-[11px] font-semibold text-rose-400 uppercase"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Contradictions (Unresolved)</span>`;
         cs.unresolved_conflicts.forEach(cl => {
             html += `
@@ -299,7 +410,7 @@ function renderChangeSet(cs) {
 async function approveCurrentChangeSet() {
     if (!currentChangeSetId) return;
     try {
-        const res = await fetch(`/api/changesets/${currentChangeSetId}/approve`, { method: "POST" });
+        const res = await fetch(`${API_BASE}/api/changesets/${currentChangeSetId}/approve`, { method: "POST" });
         const data = await res.json();
         alert("ChangeSet Approved! Concepts and Living Wiki updated.");
         document.getElementById("diff-actions").classList.add("hidden");
@@ -318,7 +429,7 @@ async function approveCurrentChangeSet() {
 async function rejectCurrentChangeSet() {
     if (!currentChangeSetId) return;
     try {
-        await fetch(`/api/changesets/${currentChangeSetId}/reject`, { method: "POST" });
+        await fetch(`${API_BASE}/api/changesets/${currentChangeSetId}/reject`, { method: "POST" });
         alert("ChangeSet Rejected.");
         document.getElementById("diff-actions").classList.add("hidden");
         document.getElementById("diff-content").innerHTML = `
@@ -335,7 +446,7 @@ async function rejectCurrentChangeSet() {
 async function resetState() {
     if (!confirm("Reset knowledge graph to seed domain ontology?")) return;
     try {
-        await fetch("/api/reset", { method: "POST" });
+        await fetch(`${API_BASE}/api/reset`, { method: "POST" });
         fetchState();
         document.getElementById("diff-content").innerHTML = `
             <div class="text-center py-12 text-slate-500">
@@ -351,6 +462,10 @@ async function resetState() {
 
 // Initial Bootstrap
 window.addEventListener("DOMContentLoaded", () => {
+    const label = document.getElementById("api-target-label");
+    if (label) {
+        label.textContent = `REST: ${API_BASE ? API_BASE + "/api" : "/api"}`;
+    }
     init3D();
     fetchState();
 });

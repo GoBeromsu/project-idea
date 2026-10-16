@@ -1,0 +1,56 @@
+"""
+Project IDEA - Model Tier Package (Gemini 4 Argon Agent & Evidence Validator).
+"""
+from model.schemas import (
+    VerificationStatus,
+    AlignmentAction,
+    SourceEvidence,
+    Concept,
+    Relation,
+    FactClaim,
+    ChangeSet,
+    ExtractedConcept,
+    ExtractedRelation,
+    ExtractedEvidence,
+    ExtractedClaim,
+    AssimilationExtraction,
+    VerifyQuoteRequest,
+    VerifyQuoteResponse,
+    ExtractRequest,
+    ExtractResponse,
+    CorrectRequest,
+    CorrectResponse,
+    BuildChangeSetRequest,
+    PipelineTrace,
+    AssimilatePipelineResponse,
+)
+from model.validator import EvidenceValidator, normalize_text
+from model.agent_loop import AssimilationEngine, SYSTEM_PROMPT
+
+__all__ = [
+    "VerificationStatus",
+    "AlignmentAction",
+    "SourceEvidence",
+    "Concept",
+    "Relation",
+    "FactClaim",
+    "ChangeSet",
+    "ExtractedConcept",
+    "ExtractedRelation",
+    "ExtractedEvidence",
+    "ExtractedClaim",
+    "AssimilationExtraction",
+    "VerifyQuoteRequest",
+    "VerifyQuoteResponse",
+    "ExtractRequest",
+    "ExtractResponse",
+    "CorrectRequest",
+    "CorrectResponse",
+    "BuildChangeSetRequest",
+    "PipelineTrace",
+    "AssimilatePipelineResponse",
+    "EvidenceValidator",
+    "normalize_text",
+    "AssimilationEngine",
+    "SYSTEM_PROMPT",
+]

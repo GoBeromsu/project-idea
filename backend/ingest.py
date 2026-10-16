@@ -1,11 +1,11 @@
 """
-Document and Text Ingestion module for Project IDEA.
+Document and Text Ingestion module for Project IDEA Backend Tier.
 Extracts clean text, paragraphs, and section anchors from raw text or URLs.
 """
-import re
-from typing import Dict, List, Any
+from typing import Dict, Any
 from bs4 import BeautifulSoup
 import httpx
+
 
 class DocumentIngester:
     @staticmethod

@@ -1,11 +1,16 @@
 """
-Mechanical Evidence Validator for Project IDEA.
+Mechanical Evidence Validator for Project IDEA Model Tier.
 Deterministically verifies quote spans against source text and checks entity referential integrity.
 """
 import re
 import unicodedata
-from typing import Tuple, Optional, List, Dict
-from models import SourceEvidence, Concept, Relation, FactClaim
+from typing import Tuple, Optional, List
+
+try:
+    from model.schemas import SourceEvidence, Concept, Relation, FactClaim
+except ImportError:
+    from schemas import SourceEvidence, Concept, Relation, FactClaim
+
 
 def normalize_text(text: str) -> str:
     """Normalize text: strip extra whitespace, normalize unicode, lowercase for relaxed matching."""
@@ -15,6 +20,7 @@ def normalize_text(text: str) -> str:
     text = unicodedata.normalize("NFKC", text)
     # Replace all whitespace sequences with single space
     return re.sub(r"\s+", " ", text).strip()
+
 
 class EvidenceValidator:
     @staticmethod

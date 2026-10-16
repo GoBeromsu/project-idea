@@ -1,11 +1,275 @@
-name: Continuous Deployment to Cloud Run
+name: Parallel 3-Tier CI, Auto Release & Cloud Run CD
 
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Path Filtering: Detect changes across frontend / backend / model tiers
+  # ---------------------------------------------------------------------------
+  changes:
+    name: Detect Tier Changes
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.decide.outputs.frontend }}
+      backend: ${{ steps.decide.outputs.backend }}
+      model: ${{ steps.decide.outputs.model }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check modified paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - 'static/**'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - 'Dockerfile'
+              - '.github/workflows/deploy.yml'
+            backend:
+              - 'backend/**'
+              - 'server.py'
+              - 'store.py'
+              - 'ingest.py'
+              - 'seed_domain.json'
+              - 'tests/test_server.py'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - 'Dockerfile'
+              - '.github/workflows/deploy.yml'
+            model:
+              - 'model/**'
+              - 'agent_loop.py'
+              - 'models.py'
+              - 'validator.py'
+              - 'tests/test_validator.py'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - 'Dockerfile'
+              - '.github/workflows/deploy.yml'
+
+      - name: Decide CI matrix execution
+        id: decide
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+            echo "model=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend=${{ steps.filter.outputs.frontend }}" >> "$GITHUB_OUTPUT"
+            echo "backend=${{ steps.filter.outputs.backend }}" >> "$GITHUB_OUTPUT"
+            echo "model=${{ steps.filter.outputs.model }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ---------------------------------------------------------------------------
+  # 2A. Parallel CI — Frontend Tier
+  # ---------------------------------------------------------------------------
+  ci-frontend:
+    name: CI — Frontend Tier
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv with dependency cache
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Validate Frontend assets & server endpoints
+        run: |
+          uv run python -m py_compile frontend/server.py
+          PYTHONPATH=. uv run python -c "
+          from pathlib import Path
+          from fastapi.testclient import TestClient
+          from frontend.server import app
+
+          assert Path('frontend/index.html').exists(), 'Missing frontend/index.html'
+          assert Path('frontend/app.js').exists(), 'Missing frontend/app.js'
+
+          client = TestClient(app)
+          r_health = client.get('/health')
+          assert r_health.status_code == 200
+          assert r_health.json()['tier'] == 'frontend'
+
+          r_index = client.get('/')
+          assert r_index.status_code == 200
+          assert 'window.BACKEND_API_URL' in r_index.text
+
+          r_js = client.get('/static/app.js')
+          assert r_js.status_code == 200
+          print('Frontend Tier CI passed!')
+          "
+
+  # ---------------------------------------------------------------------------
+  # 2B. Parallel CI — Backend Tier
+  # ---------------------------------------------------------------------------
+  ci-backend:
+    name: CI — Backend Tier
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv with dependency cache
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Verify Backend 3-Tier decoupling & run Backend tests
+        run: |
+          uv run python -m py_compile backend/schemas.py backend/store.py backend/ingest.py backend/model_client.py backend/server.py
+          PYTHONPATH=. uv run python -c "
+          from pathlib import Path
+          from fastapi.testclient import TestClient
+          from backend.server import app
+
+          # Enforce strict 3-Tier separation: Backend must not import google.genai directly
+          for py_file in Path('backend').glob('*.py'):
+              content = py_file.read_text(encoding='utf-8')
+              assert 'from google import genai' not in content, f'Prohibited SDK import in {py_file}'
+              assert 'import google.genai' not in content, f'Prohibited SDK import in {py_file}'
+
+          client = TestClient(app)
+          assert client.get('/health').status_code == 200
+          assert client.get('/api/state').status_code == 200
+          assert client.post('/api/reset').status_code == 200
+          print('Backend Tier decoupling & endpoint checks passed!')
+          "
+          PYTHONPATH=. uv run pytest tests/test_server.py tests/test_3tier_rest_loop.py -v
+
+  # ---------------------------------------------------------------------------
+  # 2C. Parallel CI — Model Tier (Gemini 4 Argon)
+  # ---------------------------------------------------------------------------
+  ci-model:
+    name: CI — Model Tier
+    needs: changes
+    if: ${{ needs.changes.outputs.model == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv with dependency cache
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Verify Gemini 4 Argon compliance & run Model Tier tests
+        run: |
+          uv run python -m py_compile model/schemas.py model/validator.py model/agent_loop.py model/server.py
+          PYTHONPATH=. uv run python -c "
+          from pathlib import Path
+          from fastapi.testclient import TestClient
+          from model.server import app
+
+          loop_code = Path('model/agent_loop.py').read_text(encoding='utf-8')
+          assert 'gemini-4-argon' in loop_code, 'Model must use gemini-4-argon'
+          assert 'interactions.create' in loop_code, 'Must use Interactions API'
+          assert 'previous_interaction_id' in loop_code, 'Must use previous_interaction_id for Turn 2'
+          assert 'thinking_budget' not in loop_code, 'Deprecated thinking_budget is prohibited'
+
+          client = TestClient(app)
+          r_health = client.get('/health')
+          assert r_health.status_code == 200
+          assert r_health.json()['tier'] == 'model'
+          assert r_health.json()['model'] == 'gemini-4-argon'
+
+          r_verify = client.post('/api/v1/verify-quote', json={
+              'source_text': 'Monte Carlo Tree Search (MCTS) is a heuristic search algorithm.',
+              'quote': 'heuristic search algorithm',
+              'strict': True
+          })
+          assert r_verify.status_code == 200
+          assert r_verify.json()['valid'] is True
+          print('Model Tier compliance & API checks passed!')
+          "
+          PYTHONPATH=. uv run pytest tests/test_validator.py -v
+
+  # ---------------------------------------------------------------------------
+  # 3. Automated GitHub Release on Merge to main
+  # ---------------------------------------------------------------------------
+  release:
+    name: Create GitHub Release
+    needs: [ci-frontend, ci-backend, ci-model]
+    if: |
+      always() &&
+      (needs.ci-frontend.result == 'success' || needs.ci-frontend.result == 'skipped') &&
+      (needs.ci-backend.result == 'success' || needs.ci-backend.result == 'skipped') &&
+      (needs.ci-model.result == 'success' || needs.ci-model.result == 'skipped') &&
+      ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.version.outputs.tag_name }}
+    steps:
+      - name: Checkout repository with full tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate next semantic patch version
+        id: version
+        run: |
+          git fetch --tags --force
+          LATEST_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" --sort=-v:refname | head -n 1)
+          if [ -z "$LATEST_TAG" ]; then
+            NEXT_TAG="v0.1.0"
+          else
+            VERSION=${LATEST_TAG#v}
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2)
+            PATCH=$(echo "$VERSION" | cut -d. -f3)
+            NEXT_PATCH=$((PATCH + 1))
+            NEXT_TAG="v${MAJOR}.${MINOR}.${NEXT_PATCH}"
+          fi
+          echo "Calculated release version: $NEXT_TAG (previous: ${LATEST_TAG:-none})"
+          echo "tag_name=$NEXT_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release with Release Notes
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag_name }}
+          name: "Release ${{ steps.version.outputs.tag_name }}"
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+
+  # ---------------------------------------------------------------------------
+  # 4. Remote Docker Build & Cloud Run Deployment (Port 8000)
+  # ---------------------------------------------------------------------------
   deploy:
+    name: Deploy to Google Cloud Run
+    needs: [release]
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -19,7 +283,7 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Deploy to Cloud Run
+      - name: Deploy container to Cloud Run (asia-northeast3, port 8000)
         if: ${{ env.GCP_SA_KEY != '' }}
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
@@ -28,3 +292,7 @@ jobs:
           service: project-idea
           region: asia-northeast3
           source: ./
+          env_vars: |
+            RELEASE_VERSION=${{ needs.release.outputs.tag_name }}
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          flags: "--port=8000 --allow-unauthenticated --quiet"

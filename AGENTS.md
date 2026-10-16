@@ -41,3 +41,6 @@
 
 3. **3D Visualization Integrity**:
    - The 4 rotating layers (Source, Domain Semantic Layer, Knowledge Graph, Wiki) must reflect real agent pipeline states and verification statuses (`VERIFIED`, `PROPOSED`, `UNRESOLVED`, `REJECTED`).
+
+## 3. Git Rules (Mandatory)
+- **Atomic Feature Commits**: Commit immediately upon completing and verifying each discrete feature, bugfix, or refactor (`<type>(<scope>): <subject>`) without waiting for user prompting or batching multiple features together.

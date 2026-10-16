@@ -1,0 +1,77 @@
+{
+  "concepts": [
+    {
+      "id": "concept_mcts",
+      "name": "Monte Carlo Tree Search",
+      "synonyms": ["MCTS", "tree search heuristic", "rollout search"],
+      "description": "A heuristic search algorithm for decision processes combining tree search with Monte Carlo simulations.",
+      "status": "VERIFIED",
+      "layer": "domain"
+    },
+    {
+      "id": "concept_rlhf",
+      "name": "Reinforcement Learning from Human Feedback",
+      "synonyms": ["RLHF", "human feedback alignment", "preference tuning"],
+      "description": "Technique that trains a reward model from human comparisons to fine-tune language models.",
+      "status": "VERIFIED",
+      "layer": "domain"
+    },
+    {
+      "id": "concept_tot",
+      "name": "Tree of Thoughts",
+      "synonyms": ["ToT", "tree-of-thought prompting", "branching reasoning"],
+      "description": "A problem-solving framework that generalizes chain-of-thought to explore multiple reasoning paths.",
+      "status": "VERIFIED",
+      "layer": "domain"
+    },
+    {
+      "id": "concept_agentic_loop",
+      "name": "Autonomous Agent Loop",
+      "synonyms": ["agent loop", "ReAct loop", "autonomous loop"],
+      "description": "An iterative execution cycle of perception, reasoning, tool execution, and self-correction.",
+      "status": "VERIFIED",
+      "layer": "domain"
+    },
+    {
+      "id": "concept_interactions_api",
+      "name": "Interactions API",
+      "synonyms": ["client.interactions.create", "Gemini Interactions API", "Argon Interactions API"],
+      "description": "Google GenAI API facilitating multi-turn stateful conversational interactions with implicit caching.",
+      "status": "VERIFIED",
+      "layer": "domain"
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_tot_uses_mcts",
+      "source_id": "concept_tot",
+      "target_id": "concept_mcts",
+      "predicate": "uses",
+      "description": "Tree of Thoughts employs search heuristics inspired by Monte Carlo Tree Search.",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "rel_agent_uses_interactions",
+      "source_id": "concept_agentic_loop",
+      "target_id": "concept_interactions_api",
+      "predicate": "implements_via",
+      "description": "Autonomous agents maintain stateful reasoning loops via the Interactions API.",
+      "status": "VERIFIED"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim_tot_systematic",
+      "concept_id": "concept_tot",
+      "statement": "Tree of Thoughts allows LMs to perform deliberate decision making by considering multiple paths.",
+      "status": "VERIFIED",
+      "evidence": {
+        "url": "https://arxiv.org/abs/2305.10601",
+        "title": "Tree of Thoughts: Deliberate Problem Solving with Large Language Models",
+        "section_anchor": "Abstract",
+        "exact_quote": "Tree of Thoughts allows LMs to perform deliberate decision making by considering multiple different reasoning paths",
+        "mechanical_verified": true
+      }
+    }
+  ]
+}
