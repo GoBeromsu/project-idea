@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal
 from pydantic import BaseModel, Field
 
 
@@ -105,6 +105,7 @@ class ExtractedConcept(BaseModel):
     action: str = Field("PROPOSE", description="MATCH, PROPOSE, or UNRESOLVED")
     node_type: str = Field("CONCEPT", description="TERM, CONCEPT, or ENTITY")
     synonyms: List[str] = Field(default_factory=list)
+    aliases: List[str] = Field(default_factory=list)
     description: str = Field("", description="Definition of concept")
     alignment_reason: Optional[str] = Field(None, description="Reasoning for MATCH, PROPOSE, or UNRESOLVED")
 
@@ -150,11 +151,39 @@ class VerifyQuoteResponse(BaseModel):
     error: Optional[str] = None
 
 
+class JargonCandidate(BaseModel):
+    term: str
+    expansion: Optional[str] = None
+    canonical_match_id: Optional[str] = None
+    layer: str = "TERM"
+    action: Literal["MATCH", "PROPOSE", "UNRESOLVED"] = "PROPOSE"
+    confidence: float = 1.0
+    ambiguity_reason: Optional[str] = None
+
+
+class JargonScanResult(BaseModel):
+    model_used: str = "gemini-3.8-flash"
+    thinking_level: str = "low"
+    interaction_id: str = ""
+    candidates: List[JargonCandidate] = Field(default_factory=list)
+
+
+class JargonScanRequest(BaseModel):
+    source_text: str
+    title: str = "Untitled Document"
+    seed_ontology: Dict[str, Any] = Field(default_factory=dict)
+
+
+class JargonScanResponse(BaseModel, _AwaitableModelMixin):
+    scan_result: JargonScanResult
+
+
 class ExtractRequest(BaseModel):
     doc_data: Dict[str, Any]
     seed_ontology: Dict[str, Any]
     existing_claims: List[FactClaim] = Field(default_factory=list)
     question: Optional[str] = None
+    enable_flash_jargon_scan: bool = False
 
 
 class ExtractResponse(BaseModel, _AwaitableModelMixin):
@@ -162,6 +191,7 @@ class ExtractResponse(BaseModel, _AwaitableModelMixin):
     extraction: AssimilationExtraction
     thought_summaries: List[str] = Field(default_factory=list)
     validation_failures: List[Dict[str, Any]] = Field(default_factory=list)
+    jargon_scan: Optional[JargonScanResult] = None
 
 
 class CorrectRequest(BaseModel):
@@ -193,6 +223,10 @@ class PipelineTrace(BaseModel):
     remaining_failures_count: int = 0
     thought_summaries: List[str] = Field(default_factory=list)
     execution_stage: str = "Complete"
+    flash_scan_interaction_id: Optional[str] = None
+    jargon_candidates: List[Dict[str, Any]] = Field(default_factory=list)
+    adversarial_flags: List[Dict[str, Any]] = Field(default_factory=list)
+    layer_distribution: Dict[str, int] = Field(default_factory=dict)
 
 
 class AssimilatePipelineResponse(BaseModel, _AwaitableModelMixin):

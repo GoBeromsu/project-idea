@@ -173,6 +173,14 @@ def _extract_html_document(html: str, source_url: str, resolved_url: str) -> Dic
     text_blocks: List[str] = []
 
     if is_arxiv and abstract_block:
+        for desc in abstract_block.find_all("span", class_="descriptor"):
+            desc.decompose()
+        abstract_text = re.sub(r"\s+", " ", abstract_block.get_text(" ", strip=True)).strip()
+        abstract_text = re.sub(r"^\s*Abstract:\s*", "", abstract_text, flags=re.IGNORECASE).strip()
+        if abstract_text:
+            text_blocks.append(f"[Section: Abstract]\n{abstract_text}")
+            sections.append({"anchor": "Abstract", "content": abstract_text})
+
         authors_div = soup.find("div", class_=lambda c: c and "authors" in c)
         if authors_div:
             for desc in authors_div.find_all("span", class_="descriptor"):
@@ -189,14 +197,6 @@ def _extract_html_document(html: str, source_url: str, resolved_url: str) -> Dic
             subjects_text = re.sub(r"\s+", " ", subjects_el.get_text(" ", strip=True)).strip()
             if subjects_text:
                 text_blocks.append(f"Subjects: {subjects_text}")
-
-        for desc in abstract_block.find_all("span", class_="descriptor"):
-            desc.decompose()
-        abstract_text = re.sub(r"\s+", " ", abstract_block.get_text(" ", strip=True)).strip()
-        abstract_text = re.sub(r"^\s*Abstract:\s*", "", abstract_text, flags=re.IGNORECASE).strip()
-        if abstract_text:
-            text_blocks.append(f"[Section: Abstract]\n{abstract_text}")
-            sections.append({"anchor": "Abstract", "content": abstract_text})
 
     for tag in soup(["nav", "footer"]):
         tag.decompose()
@@ -247,7 +247,53 @@ def _extract_html_document(html: str, source_url: str, resolved_url: str) -> Dic
         "full_text": clean_text,
         "section_anchors": section_anchors,
         "sections": sections,
+        "jargon_candidates": extract_jargon_candidates(clean_text),
     }
+
+
+def extract_jargon_candidates(text: str) -> List[Dict[str, str]]:
+    if not text:
+        return []
+    candidates: List[Dict[str, str]] = []
+    seen = set()
+
+    def _add(term: str, expansion: str = "", category: str = "JARGON"):
+        clean_term = term.strip()
+        if not clean_term or len(clean_term) < 2:
+            return
+        key = clean_term.lower()
+        if key in seen:
+            return
+        seen.add(key)
+        candidates.append({"term": clean_term, "expansion": expansion.strip(), "category": category})
+
+    for m in re.finditer(r"\b([A-Z][a-zA-Z0-9-]+(?:\s+[A-Z][a-zA-Z0-9-]+){1,5})\s*\(([A-Z]{2,8})\)", text):
+        _add(m.group(2), m.group(1), "ACRONYM")
+        _add(m.group(1), m.group(2), "CONCEPT_TERM")
+
+    for m in re.finditer(r"\b([A-Z]{2,8})\s*\(([A-Z][a-zA-Z0-9-]+(?:\s+[A-Z][a-zA-Z0-9-]+){1,5})\)", text):
+        _add(m.group(1), m.group(2), "ACRONYM")
+
+    for m in re.finditer(r"\b([A-Z][a-z0-9]+[A-Z][a-zA-Z0-9]*)\b", text):
+        _add(m.group(1), "", "CAMELCASE_JARGON")
+
+    known_patterns = [
+        (r"\bKV[- ]?[Cc]ache\b", "Key-Value Cache"),
+        (r"\bKey[- ]Value\s+Cache\b", "KV Cache"),
+        (r"\bSpeculative\s+Decoding\b", "Speculative Decoding"),
+        (r"\bPage\s+Table\b", "OS Virtual Memory Page Table"),
+        (r"\bTree[- ]of[- ]Thoughts\b", "ToT"),
+        (r"\bChain[- ]of[- ]Thought\b", "CoT"),
+        (r"\bContinuous\s+Batching\b", "Iteration-Level Scheduling"),
+        (r"\bFlashAttention(?:-\d+)?\b", "IO-Aware Exact Attention"),
+        (r"\bPagedAttention\b", "Block-Paged KV Cache Attention"),
+        (r"\bvLLM\b", "Virtual Large Language Model Serving Engine"),
+    ]
+    for pat, exp in known_patterns:
+        for m in re.finditer(pat, text, flags=re.IGNORECASE):
+            _add(m.group(0), exp, "DOMAIN_JARGON")
+
+    return candidates
 
 
 async def fetch_and_parse_url(url: str, timeout: float = 15.0) -> Dict[str, Any]:
@@ -364,6 +410,7 @@ def _parse_raw_text_document(
             "full_text": full_text,
             "section_anchors": section_anchors,
             "sections": sections,
+            "jargon_candidates": extract_jargon_candidates(full_text),
         }
     )
 
