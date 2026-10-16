@@ -13,10 +13,10 @@
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
 [![Managed with uv](https://img.shields.io/badge/uv-Package%20Manager-DE5FE9?logo=uv&logoColor=white)](https://docs.astral.sh/uv/)
 [![Code Style: Ruff](https://img.shields.io/badge/Code%20Style-Ruff-D7FF64?logo=ruff&logoColor=black)](pyproject.toml)
-[![Zero-Comment Policy](https://img.shields.io/badge/Lint-Zero--Comments%20Enforced-18212C)](scripts/lint_no_comments.py)
+[![Zero-Comment Policy](https://img.shields.io/badge/CI%20Gate-Zero--Comments%20Enforced-18212C)](scripts/lint_no_comments.py)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-[**Live Web App**](https://project-idea-529324293576.asia-northeast3.run.app) · [**Product Requirements (`PRD.md`)**](PRD.md) · [**Spatial UI Spec (`DESIGN.md`)**](DESIGN.md) · [**Agent Rules (`AGENTS.md`)**](AGENTS.md) · [**Demo Script (`DEMO_SCRIPT.md`)**](DEMO_SCRIPT.md)
+[**Live Web App**](https://project-idea-529324293576.asia-northeast3.run.app) · [**Product Requirements (`PRD.md`)**](PRD.md) · [**Spatial UI Spec (`DESIGN.md`)**](DESIGN.md) · [**Agent Governance (`AGENTS.md`)**](AGENTS.md) · [**Demo Script (`DEMO_SCRIPT.md`)**](DEMO_SCRIPT.md)
 
 </div>
 
@@ -24,12 +24,12 @@
 
 ## ⚡ Overview
 
-**Project IDEA** is an agentic personal knowledge library built for researchers and engineers reading dense technical literature (initially focused on **LLM Inference & Serving**). Instead of dumping unverified summaries into a static note vault, Project IDEA connects new primary sources to your existing canonical knowledge, enforces **deterministic mechanical quote verification**, surfaces **semantic conflicts**, and stages **human-in-the-loop Knowledge Diffs (`ChangeSet`)** before updating your session's Living Wiki.
+**Project IDEA** is an agentic personal knowledge library built for researchers and engineers reading dense technical literature (focused on **LLM Inference & Serving**). Instead of dumping unverified summaries into a static note vault, Project IDEA connects new primary sources to your existing canonical knowledge, enforces **deterministic mechanical quote verification**, surfaces **semantic conflicts**, and stages **human-in-the-loop Knowledge Diffs (`ChangeSet`)** before updating your session's Living Wiki.
 
 Everything happens inside a single continuous WebGL scene driven by one unified prompt:
-- **Left Portal (`Black Hole`)**: Primary source ingestion anchor where raw URLs and technical documents enter.
-- **Center Space (`Rotating Semantic Orbits`)**: Multi-ring 3D knowledge layers aligning `Term`, `Concept`, `Entity`, and `Claim` nodes against existing session knowledge.
-- **Right Portal (`White Hole`)**: Output portal where human-approved `ChangeSet` mutations emerge into the active **Living Wiki** for immediate reuse in follow-up questions.
+- **Left Portal (`Black Hole`, $X = -22$)**: Primary source ingestion anchor where raw URLs and technical documents enter after passing SSRF and content-type guardrails.
+- **Center Space (`3-Ring Rotating Semantic Orbits`, $X = -12 \dots +12$)**: Multi-ring 3D orbital layers (`Domain Terms`, `Canonical Concepts`, `Grounded Claims`) aligning `TERM`, `CONCEPT`, `ENTITY`, and `CLAIM` nodes against existing session knowledge.
+- **Right Portal (`White Hole`, $X = +22$)**: Output portal where human-approved `ChangeSet` mutations emerge into the active **Living Wiki** for immediate reuse in follow-up session queries.
 
 ---
 
@@ -51,12 +51,12 @@ Project IDEA enforces strict separation of concerns across three decoupled runti
 flowchart LR
     subgraph Tier1["Tier 1 · Frontend (frontend/ :3000)"]
         Prompt["Unified Prompt<br/>(Question or URL + Question)"]
-        Scene["Continuous 3D WebGL Space<br/>Black Hole ⇢ Semantic Orbits ⇢ White Hole"]
+        Scene["Continuous 3D WebGL Space<br/>Black Hole ⇢ 3 Orbital Rings ⇢ White Hole"]
         Cards["2D Overlay Cards<br/>Knowledge Card · Trace to Source · Diff Review"]
     end
 
     subgraph Tier2["Tier 2 · Backend Orchestrator (backend/ :8000)"]
-        Ingest["DocumentIngester<br/>Safe Public URL Fetch & Anchor Parser"]
+        Ingest["DocumentIngester<br/>SSRF Guard · HTML/Text Anchor Parser"]
         Store["KnowledgeStore<br/>Session Graph · Living Wiki · Staged ChangeSets"]
         Orchestrator["ModelServiceClient<br/>REST Loop & Execution Guardrails"]
     end
@@ -80,27 +80,27 @@ flowchart LR
     Store -->|"Updated Session Graph & Wiki"| Scene
 ```
 
-### Dual Execution Pipelines
+### Runtime Stage & Thinking Effort Governance (`AGENTS.md`)
 
-1. **Read-Only Knowledge Query Path (`Query`)**
-   - **Flow**: `User Question → Lookup Session Approved Knowledge & Primary Sources → Gemini 4 Argon Grounded Answer → Answer Card + Highlighted 3D Evidence Path`
-   - **Guarantee**: Purely read-only (`mutated_wiki = False`). Ambiguous or unsupported questions never fabricate facts or mutate the Living Wiki.
-
-2. **Primary Source Assimilation Path (`Ingest → Align → Verify/Repair → Review → Apply`)**
-   - **Flow**: `URL + Question → Source Ingestion & Section Anchors → Canonical Concept Alignment → Argon Answer + Proposed ChangeSet → Mechanical Quote Verification → Stateful Turn-2 Self-Correction (if needed) → Human Diff Review & Approval → Same-Session Reuse`
-   - **Guarantee**: Mechanically blocked quotes (`Blocked`) and unresolved contradictions (`Needs review`) cannot bypass verification to overwrite the Wiki.
+| Stage | Responsibility | Runtime Component / Model | `thinking_level` | Verification Gate |
+| :--- | :--- | :--- | :---: | :--- |
+| **Stage 1** | Source Ingestion, Section Anchor Parsing & Jargon (`TERM`) Candidate Identification | `backend/ingest.py` + `gemini-4-argon` | Deterministic + `medium` | SSRF/private-IP & binary payload blocking (`2 MB` cap), section anchor extraction, domain acronym/jargon separation |
+| **Stage 2** | Canonical Concept (`CONCEPT` / `ENTITY`) Alignment & Relation Extraction | `gemini-4-argon` | `medium` | Classifies candidates against seed/session Wiki as `MATCH` (synonym merge), `PROPOSE` (novel concept), or `UNRESOLVED` (ambiguous/conflicting) |
+| **Stage 3** | Claim Evidence Extraction, Mechanical Quote Verification & Turn-2 Self-Correction | `EvidenceValidator` + `gemini-4-argon` (`previous_interaction_id`) | `medium` (Turn 1) $\rightarrow$ `high`/`medium` (Turn 2) | Verbatim normalized substring & referential integrity check; max 1 stateful repair turn before isolating failures as `Blocked` (`REJECTED`) |
+| **Stage 4–5** | Selective Human Approval (`White Hole`) & Same-Session Grounded Query (`Query`) | `backend/store.py` + `gemini-4-argon` | `medium` | Zero silent overwrites before approval; subsequent session queries cite newly assimilated `TERM` / `CONCEPT` / `CLAIM` evidence |
 
 ---
 
 ## 🎨 Spatial Interface & Epistemic Design (`DESIGN.md`)
 
-Project IDEA pairs a high-craft light-mode scientific workspace (`#F7F9FC` canvas with Google-inspired `#4285F4` Blue, `#EA4335` Red, `#FBBC05` Yellow, `#34A853` Green accents) with a continuous left-to-right 3D WebGL scene:
+Project IDEA pairs a high-craft light-mode scientific workspace (`#F7F9FC` canvas with Google-inspired `#4285F4` Blue, `#EA4335` Red, `#FBBC05` Yellow, `#34A853` Green accents) with a continuous left-to-right 3D WebGL scene (`IdeaSceneManager`):
 
 ```text
 IDEA                                               Session only · execution status
 
 [ BLACK HOLE ]  ⇢  [ Terms / Knowledge Orbits + Existing Nodes ]  ⇢  [ WHITE HOLE ]
   Source URL            candidates · evidence · relations             Wiki changes
+  (X = -22)           3 Tilted Rings (X = -12 to +12)                  (X = +22)
 
                      [ Answer / Selected Node / Review Card ]
 
@@ -114,7 +114,7 @@ Project IDEA never collapses source existence, model opinion, objective truth, a
 | Verification Badge | Layer / Meaning | What It Guarantees (and Does Not Claim) |
 | :--- | :--- | :--- |
 | `Seed knowledge` | Initial Session Baseline | Pre-loaded canonical LLM Inference & Serving concepts/claims marked as session examples. |
-| `Source located` | Mechanical Ingestion | Public URL resolved and readable text/section anchor extracted by `DocumentIngester`. |
+| `Source located` | Mechanical Ingestion | Public URL resolved (SSRF-checked) and readable text/section anchor extracted by `DocumentIngester`. |
 | `Quote matched` | Mechanical Verification | Exact quote deterministically verified in raw source text (`mechanical_verified = True`). Does *not* prove universal truth of the claim. |
 | `Model-reviewed` | Argon Semantic Alignment | Aligned by Gemini 4 Argon (`MATCH` / `PROPOSE`) with conditions and scope preserved. |
 | `Needs review` | Conflict / Ambiguity Gate | Contradicts existing claims or lacks sufficient context (`UNRESOLVED`); held back from auto-apply. |
@@ -127,7 +127,7 @@ Project IDEA never collapses source existence, model opinion, objective truth, a
 | :--- | :--- |
 | `Idle / Explore` | Displays seed/session knowledge, slow independent ring rotation, both portals, and the bottom prompt. |
 | `Query` | Highlights referenced knowledge paths and opens the grounded Answer Card without mutating the graph. |
-| `Ingest` | Anchors the incoming URL/source at the left Black Hole portal; surfaces fetch errors honestly. |
+| `Ingest` | Anchors the incoming URL/source at the left Black Hole portal; surfaces fetch/SSRF/binary errors honestly. |
 | `Align` | Highlights matched canonical nodes (`MATCH`) and renders candidate proposals (`PROPOSE`) with dashed links. |
 | `Verify / Repair` | Displays real-time mechanical quote check status and Turn-2 Argon self-correction (`previous_interaction_id`). |
 | `Review` | Pauses orbit rotation for readable side-by-side Source vs. Proposed Diff inspection without occluding the White Hole. |
@@ -160,12 +160,13 @@ Out of the box, `seed_domain.json` initializes a curated ontology and grounded c
 project-idea/
 ├── frontend/                     # Tier 1: WebGL Spatial UI & Diff Inspector (:3000)
 │   ├── index.html                # Single-screen spatial canvas, collapsible overlay cards & unified prompt
-│   ├── app.js                    # Three.js continuous portal/orbit renderer & stateful session client
+│   ├── scene_physics.js          # Three.js Left-to-Right portals, 3-ring orbital physics & raycast engine
+│   ├── app.js                    # Stateful session client, trace highlighting & ChangeSet review controller
 │   └── server.py                 # Standalone FastAPI frontend server injecting window.BACKEND_API_URL
 ├── backend/                      # Tier 2: Ingestion, KnowledgeStore & Guardrails (:8000)
 │   ├── schemas.py                # Shared Pydantic v2 contracts (Concept, FactClaim, ChangeSet, QueryResponse)
 │   ├── store.py                  # Session Knowledge Graph, Living Wiki & ChangeSet state manager
-│   ├── ingest.py                 # Public URL fetcher, HTML parser & section anchor extractor
+│   ├── ingest.py                 # SSRF-safe public URL fetcher, binary guard & section anchor extractor
 │   ├── model_client.py           # Async httpx client orchestrating the multi-turn Model Tier REST loop
 │   ├── server.py                 # Backend FastAPI routes (/api/state, /api/assimilate, /api/changesets/*)
 │   └── seed_domain.json          # Canonical LLM Inference & Reasoning seed ontology
@@ -182,9 +183,10 @@ project-idea/
 │   ├── test_3tier_rest_loop.py   # End-to-end 3-Tier multi-turn self-correction integration test
 │   ├── test_server.py            # Backend API state & approval lifecycle tests
 │   └── test_validator.py         # Deterministic quote & referential integrity unit tests
+├── .pre-commit-config.yaml       # Local pre-commit hooks (lint_no_comments.py + ruff check)
 ├── PRD.md                        # Product Requirements Document (v0.7 — Product outcomes first)
 ├── DESIGN.md                     # Spatial UI, color tokens, typography & interaction specification
-├── AGENTS.md                     # Multi-agent engineering rules, boundaries & verification loop
+├── AGENTS.md                     # Multi-agent engineering rules, model governance & verification loop
 ├── LINEAR_TRIAGE.md              # Parallel execution & verification plan (T0–T5)
 ├── Dockerfile                    # Multi-service production container for Google Cloud Run
 ├── start_3tier.sh                # Launches Model (:8001), Backend (:8000), and Frontend (:3000) locally
@@ -197,7 +199,7 @@ project-idea/
 
 | Tier | Method & Endpoint | Description |
 | :--- | :--- | :--- |
-| **Frontend (`:3000`)** | `GET /` · `GET /static/app.js` | Serves the 3D WebGL Semantic Library SPA and injects runtime `BACKEND_API_URL`. |
+| **Frontend (`:3000`)** | `GET /` · `GET /static/*` | Serves the 3D WebGL Semantic Library SPA and injects runtime `BACKEND_API_URL`. |
 | **Frontend (`:3000`)** | `GET /health` | Health probe returning frontend tier status and bound backend URL. |
 | **Backend (`:8000`)** | `GET /api/state` | Returns active session `concepts`, `relations`, approved `claims`, and pending `changesets`. |
 | **Backend (`:8000`)** | `POST /api/assimilate` | Ingests a URL or raw text snippet and executes the 2-turn Model Tier assimilation loop. |
@@ -232,7 +234,7 @@ project-idea/
 - **AC-06 (Selective Approval & Idempotency)**: Applies only approved valid changes; rejection and duplicate clicks never corrupt session state.
 - **AC-07 (Interactive Node Inspection)**: Clicking nodes opens `Knowledge Card` with `Trace to source` without permanently occluding the right White Hole.
 - **AC-08 (Same-Session Reuse)**: Newly approved knowledge is immediately cited in subsequent session questions; unapproved drafts are never cited as fact.
-- **AC-09 (Honest Failure Handling)**: Surfaces network, parsing, or model errors transparently while preserving existing session knowledge.
+- **AC-09 (Honest Failure Handling)**: Surfaces network, SSRF/binary, parsing, or model errors transparently while preserving existing session knowledge.
 - **AC-10 (Live Cloud Execution)**: Runs real Gemini 4 Argon + mechanical validation on Google Cloud Run with server-side API key protection.
 
 ---
@@ -278,9 +280,9 @@ PYTHONPATH=. uv run python scripts/eval_harness.py
 
 ---
 
-## ☁️ Deployment (Google Cloud Run)
+## ☁️ Continuous Deployment (Google Cloud Run)
 
-In production container environments (`Dockerfile`), the Model Tier (`model.server:app`) runs internally on `127.0.0.1:8001` while the Backend Tier (`backend.server:app`) serves both the REST API and static Frontend SPA on `0.0.0.0:${PORT:-8080}`:
+Every push to `main` runs the CI quality gates (`.github/workflows/deploy.yml`: zero-comment AST check, Ruff linter, and Pytest suite) before deploying the multi-tier container to Google Cloud Run. In production (`Dockerfile`), the Model Tier (`model.server:app`) runs internally on `127.0.0.1:8001` while the Backend Tier (`backend.server:app`) serves both the REST API and static Frontend SPA on `0.0.0.0:${PORT:-8080}`:
 
 ```bash
 ./deploy.sh
