@@ -1,0 +1,21 @@
+[project]
+name = "project-idea"
+version = "0.1.0"
+description = "Project IDEA — AI Knowledge Assimilation Agent powered by Gemini 4 Argon"
+readme = "PRD.md"
+requires-python = ">=3.11"
+dependencies = [
+    "google-genai>=2.3.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.10.0",
+    "httpx>=0.28.0",
+    "beautifulsoup4>=4.12.3",
+    "python-dotenv>=1.0.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+]

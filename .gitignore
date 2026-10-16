@@ -1,0 +1,17 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Node / Frontend
+node_modules/
+dist/
+
+# OS
+.DS_Store
