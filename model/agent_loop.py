@@ -383,10 +383,16 @@ class AssimilationEngine:
 
     def scan_jargon_flash(
         self,
-        source_text: str,
-        seed_ontology: Dict[str, Any],
+        source_text: Optional[str] = None,
+        seed_ontology: Optional[Dict[str, Any]] = None,
         title: str = "Untitled Document",
+        doc_data: Optional[Dict[str, Any]] = None,
     ) -> JargonScanResult:
+        if doc_data and isinstance(doc_data, dict):
+            source_text = source_text or doc_data.get("full_text") or doc_data.get("text") or ""
+            title = doc_data.get("title") or title
+        source_text = source_text or ""
+        seed_ontology = seed_ontology or {}
         seed_concepts = [self._normalize_concept_dict(c) for c in seed_ontology.get("concepts", [])]
         compact_seed = [
             {"id": c["id"], "name": c["name"], "synonyms": c["synonyms"], "node_type": c["node_type"]}

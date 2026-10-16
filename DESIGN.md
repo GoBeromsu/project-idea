@@ -6,115 +6,86 @@
 
 ## 1. Aesthetic Direction & References
 
-### 1.1 Persona: Dark 3D Knowledge Constellation
-Project IDEA adopts a **Dark 3D Knowledge Constellation** aesthetic that visualizes knowledge assimilation as a living cosmic observatory. The previous bright/Google-primary theme is deprecated in favor of a deep space environment where semantic structures, citations, and pending proposals shine with restrained **Cyan, Blue, and Violet** luminescence.
+### 1.1 Persona: Dark 3D Knowledge Constellation & 4-Layer Arena3D Space
+Project IDEA adopts a **Dark 3D Knowledge Constellation** aesthetic combined with **Arena3D stratified parallel planes**, visualizing knowledge assimilation as a living cosmic observatory. Semantic structures, citations, and pending proposals shine with restrained **Cyan, Blue, Violet, and Teal** luminescence across a wide, uncluttered 3D canvas.
 
-* **Primary Reference**:
-  * **CareerHackerAlex Second Brain (`https://www.careerhackeralex.com/memory`)**: Deep dark cosmic void, luminous star-like nodes with soft radial halos, ultra-thin translucent constellation filaments, floating high-contrast node labels, fluid 3D orbit/zoom navigation, interactive lens filtering, and click-to-read node inspection. (Adapted to IDEA's left-to-right assimilation flow rather than copying its sidebar layout verbatim.)
+* **Primary References**:
+  * **CareerHackerAlex Second Brain (`https://www.careerhackeralex.com/memory`)**: Deep dark cosmic void, luminous star-like nodes with soft radial halos, ultra-thin translucent constellation filaments, floating high-contrast node labels, fluid 3D orbit/zoom navigation, interactive lens filtering, and click-to-read node inspection in a dedicated right sidepanel.
+  * **Arena3D Web (`https://www.arena3d.org/`)**: **4 stratified parallel tilted 3D graph planes** (`01 · JARGON` → `02 · CONCEPTS` → `03 · ENTITIES` → `04 · WIKI`) with inter-layer relational filaments and per-plane header badges.
 * **Additional Spatial & Interaction References**:
-  * **Arena3D Web (`https://www.arena3d.org/`)**: Stratified multilayer 3D graph planes and inter-layer relational edges (`Terms` → `Concepts & Entities` → `Grounded Claims`).
-  * **WebGL Black Hole (`https://webgl-black-hole.vercel.app/`)**: Left-side gravitational event horizon with multi-layered glowing accretion rings and inward particle vortex.
+  * **Pure Particle Portals**: Left-side Black Hole (`x = -26.5`) and Right-side White Hole (`x = +26.5`) rendered purely as slow, organic inward/outward particle streams with soft radial glow (no opaque planet spheres or solid Saturn rings).
   * **3D Force Graph — Click-to-Focus (`https://vasturiano.github.io/3d-force-graph/example/click-to-focus/`)**: Smooth camera interpolation (`lerp`) toward a clicked node and its immediate neighborhood while pausing/slowing ambient rotation.
-  * **3D Force Graph — Emit Particles (`https://vasturiano.github.io/3d-force-graph/example/emit-particles/`)**: Directional light pulses traveling along edges to show provenance flow (`Black Hole → Semantic Space → White Hole`).
-  * **Ataraxia Knowledge Graph (`https://ataraxia.ai.kr/?node=records`)**: Clean node-to-record inspection and unobtrusive spatial navigation cues (`Drag to orbit · Scroll to zoom · Click any node to inspect evidence`).
+  * **3D Force Graph — Emit Particles (`https://vasturiano.github.io/3d-force-graph/example/emit-particles/`)**: Single, slow, deliberate light pulse per edge (`1 pulse per link`) traveling along provenance filaments (`Black Hole → 4-Layer Arena3D Space → White Hole`).
 
-### 1.2 Color Palette (Deep Space + Restrained Cyan / Blue / Violet Luminescence)
-Google primary colors are no longer required design primitives. Visual hierarchy is established through deep navy-black depth, translucent dark glassmorphism, and restrained luminous accents:
+### 1.2 Color Palette (Deep Space + Restrained Cyan / Blue / Violet / Teal Luminescence)
+Visual hierarchy is established through deep navy-black depth, translucent dark glassmorphism, and restrained luminous accents:
 
 | Token Role | Hex / Value | Usage |
 | :--- | :--- | :--- |
 | **Deep Cosmic Void (Canvas Base)** | `#05070F` (`0x05070f`) | Primary WebGL scene background and `:root` surface (`color-scheme: dark`) |
-| **Nebula Vignette Gradient** | `#090F20` → `#04060C` | Subtle radial depth backdrop behind the 3D constellation |
-| **Dark Glass HUD Surface** | `rgba(9, 14, 28, 0.84)` | Top header bar, Knowledge Card drawer, and bottom Prompt Composer (`backdrop-filter: blur(20px) saturate(160%)`) |
+| **Nebula Vignette Gradient** | `#0C1428` → `#05070F` | Subtle radial depth backdrop behind the 3D constellation |
+| **Dark Glass HUD Surface** | `rgba(9, 14, 28, 0.84)` | Top header bar, Right Sidepanel drawer, and bottom Prompt Composer (`backdrop-filter: blur(22px)`) |
 | **Elevated Card / Sub-panel** | `rgba(15, 23, 42, 0.78)` | Evidence blocks, diff item rows, citation cards, and provenance badges |
-| **Subtle Structural Border** | `rgba(148, 163, 184, 0.16)` | Hairline borders for HUD panels, pills, and dividers |
-| **Active Luminous Border** | `rgba(56, 189, 248, 0.42)` | Focused prompt dock, active lens pill, and selected node card border |
-| **Primary Typography** | `#F1F5F9` (Slate 100) | Headings, node titles, wiki synthesis prose, and prompt input |
+| **Subtle Structural Border** | `rgba(148, 163, 184, 0.18)` | Hairline borders for HUD panels, pills, and dividers |
+| **Active Luminous Border** | `rgba(56, 189, 248, 0.36)` | Focused prompt dock, active lens pill, and selected node card border |
+| **Primary Typography** | `#F8FAFC` (Slate 50) | Headings, node titles, wiki synthesis prose, and prompt input |
 | **Secondary Typography** | `#94A3B8` (Slate 400) | Descriptions, relation labels, source metadata, and helper copy |
-| **Muted / Technical Metadata** | `#64748B` (Slate 500) | Interaction IDs, coordinates, and subtle keyboard/mouse hints |
-| **Terms / Jargon Accent (Ring 1)** | `#38BDF8` (Electric Cyan) | Inner orbital layer (`x = -7.5`), Term octahedron nodes, and inflow accents |
-| **Concepts Accent (Ring 2)** | `#60A5FA` (Celestial Blue) | Middle orbital layer (`x = 0.0`) core Concept nodes and primary edges |
-| **Entities Accent (Ring 2)** | `#A78BFA` (Luminous Violet) | Middle orbital layer (`x = 0.0`) Entity prism nodes and cross-layer links |
-| **Grounded Claims Accent (Ring 3)** | `#818CF8` / `#2DD4BF` (Indigo-Teal) | Outer orbital layer (`x = +7.5`) verified Claim torus nodes |
-| **White Hole / Approved Wiki** | `#2DD4BF` / `#38BDF8` (Cyan-Teal) | Right-side White Hole (`x = +22`) synthesis rings, outflow particles, and `Verified` badges |
-| **Pending / Proposed ChangeSet** | `#F59E0B` (Amber Pulse) | Unapproved candidate nodes/edges, pulsing wireframe shells, and `Proposed` diff state |
+| **Layer 01 — Jargon (`TERM`)** | `#38BDF8` (Electric Cyan) | Plane 1 (`x = -12.0`), domain acronyms/jargon octahedron nodes, and inflow accents |
+| **Layer 02 — Concepts (`CONCEPT`)** | `#60A5FA` (Celestial Blue) | Plane 2 (`x = -4.0`), canonical Concept icosahedron nodes and primary edges |
+| **Layer 03 — Entities (`ENTITY`)** | `#A78BFA` (Luminous Violet) | Plane 3 (`x = +4.0`), named Entity/System/Architecture dodecahedron nodes |
+| **Layer 04 — Wiki (`CLAIM` / `WIKI`)** | `#2DD4BF` (Synthesized Teal) | Plane 4 (`x = +12.0`), grounded Claim & synthesized Living Wiki torus nodes |
+| **White Hole / Approved Wiki** | `#2DD4BF` / `#38BDF8` (Cyan-Teal) | Right-side White Hole (`x = +26.5`) pure outward particle stream and `Verified` badges |
+| **Pending / Proposed ChangeSet** | `#F59E0B` (Amber Pulse) | Unapproved candidate nodes/edges, wireframe shells, and `Proposed` diff state |
 | **Conflict / Blocked Gate** | `#F43F5E` (Crimson Rose) | `UNRESOLVED` semantic conflicts and mechanically `Blocked` (`REJECTED`) claims |
 
-### 1.3 Typography & Native Browser UI
+### 1.3 Typography & Rich Markdown Viewer
 * **Sans-Serif UI & Prose**: `'Inter', -apple-system, BlinkMacSystemFont, sans-serif`
 * **Technical Metadata, IDs & Verbatim Quotes**: `'JetBrains Mono', monospace`
-* **Dark-First Native Controls**: `<meta name="color-scheme" content="dark">` and `:root { color-scheme: dark; accent-color: #38bdf8; }` ensure native scrollbars, text selection, and form controls match the dark constellation canvas without white flashes (FOUC).
+* **Rich Markdown Rendering (`renderMarkdownHtml`)**: Grounded answers (`#view-answer`), node descriptions & Living Wiki synthesis (`#modal-desc`, `#node-wiki-synthesis-box`), verbatim quotes (`#modal-quote`), and Knowledge Diff summaries (`#view-diff`) render full structured Markdown (`h1`–`h4`, bulleted/numbered lists, blockquotes, inline code badges, fenced code blocks, bold/italic emphasis, safe external links, and horizontal dividers) inside `.idea-markdown-prose`.
 
 ---
 
-## 2. Core Spatial Architecture (Single Continuous WebGL Scene)
+## 2. Core Spatial Architecture (Wide Continuous WebGL Scene)
 
-The entire viewport (`100vw × 100vh`, `overflow: hidden`) is a **single continuous Three.js WebGL 3D scene**. The three spatial zones must be simultaneously visible in the default camera framing (`camera.position = (0, 11, 40)`, `controls.target = (0, -1.5, 0)`):
+The entire viewport (`100vw × 100vh`, `overflow: hidden`) is a **single continuous Three.js WebGL 3D scene** with a wide-angle framing (`fov = 50`, `camera.position = (0, 5.5, 35.5)`, `controls.target = (0, -0.5, 0)`):
 
 ```
-[ Left: BLACK HOLE (x = -22) ]  ───►  [ Center: ROTATING SEMANTIC SPACE (x = -7.5 .. +7.5) ]  ───►  [ Right: WHITE HOLE (x = +22) ]
-   Raw URL / Source Ingestion           Ring 1: Terms (-7.5) · Ring 2: Concepts (0) · Ring 3: Claims (+7.5)      Approved Living Wiki Output
+[ Left: BLACK HOLE (x = -26.5) ] ──► [ Layer 01: JARGON (-12.0) | Layer 02: CONCEPTS (-4.0) | Layer 03: ENTITIES (+4.0) | Layer 04: WIKI (+12.0) ] ──► [ Right: WHITE HOLE (x = +26.5) ]
+  Pure Inward Particle Stream          4 Parallel Tilted Arena3D Planes (14.4 × 15.4, rotY = -0.34, rotX = 0.11) + Slow Deliberate Motion              Pure Outward Particle Stream
 ```
 
-1. **Left — Black Hole (`x = -22, y = 0, z = 0`)**:
-   * **Visuals**: Deep pitch-black event horizon core surrounded by a subtle cyan/violet gravitational lensing halo, tilted multi-layer luminous accretion disks (`Cyan #38BDF8`, `Blue #3B82F6`, `Violet #8B5CF6`), and a spiraling inward particle vortex.
-   * **Role**: Entry portal where new URLs and raw source documents are absorbed. During ingestion and pending review, animated inflow threads and traveling particles connect the Black Hole to newly proposed nodes in the Semantic Space.
-   * **Interactive Portal**: Clicking the Black Hole in 3D or its `BLACK HOLE · SOURCE` spatial pill inspects the active source document, ingestion status, and raw anchor inventory.
+1. **Left — Black Hole (`x = -26.5, y = 0, z = 0`)**:
+   * **Visuals**: Pure inward-spiraling particle vortex (`450–500` soft radial-glow particles, no solid planet core or opaque rings) with slow, calm orbital drift (`spdMult = 0.45` idle).
+   * **Prompt Preprocessing Scatter (`setPreprocessedTokens`)**: As the user types or submits a prompt/URL, extracted domain tokens (`[JARGON]`, `[CONCEPT]`, `[ENTITY]`, `[WIKI]`) materialize as floating 3D badges near `x = -33`, drift slowly into the Black Hole (`x = -26.5`), and disperse toward their target layer plane (`-12.0`, `-4.0`, `+4.0`, `+12.0`).
+   * **Interactive Portal**: Clicking the Black Hole portal inspects tracked source documents and raw anchor metadata in the Right Sidepanel.
 
-2. **Center — Rotating Semantic Knowledge Space (`x = -7.5` to `+7.5`)**:
-   * **3 Stratified Orbital Layers**:
-     * **Inner Orbit (`x = -7.5`, Cyan `#38BDF8`)**: **Terms & Jargon (`TERM`)** — Domain acronyms and technical vocabulary rendered as luminous octahedra with soft star-glow halos.
-     * **Middle Orbit (`x = 0.0`, Blue `#60A5FA` & Violet `#A78BFA`)**: **Concepts (`CONCEPT`) & Entities (`ENTITY`)** — Canonical semantic concepts (icosahedra/spheres) and named entities/authors/benchmarks (faceted prisms) where synonym alignment (`MATCH`) and new node proposals (`PROPOSE`) occur.
-     * **Outer Orbit (`x = +7.5`, Indigo-Teal `#818CF8` / `#2DD4BF`)**: **Grounded Claims (`CLAIM`)** — Atomic factual statements backed by verbatim source quotes, rendered as ringed torus cores.
-   * **Constellation Filaments & Directional Particle Flow**:
-     * Thin, anti-aliased translucent lines connect Terms → Concepts → Claims, with subtle inter-concept relational bridges.
-     * Travelling light particles (`emit-particles` pattern) flow along edges from left to right, accelerating along active provenance paths when a node is selected or queried.
-   * **Visual Distinction of Proposed vs. Verified Knowledge**:
-     * **Verified / Seed Knowledge**: Steady cyan, blue, violet, or teal luminescence with solid constellation filaments connected toward the White Hole.
-     * **Proposed / Pending Knowledge (`PROPOSED`)**: Pulsing amber-gold (`#F59E0B`) node core encased in a rotating wireframe shell, tethered to the Black Hole via dashed inflow lines until the user approves or rejects the ChangeSet.
-     * **Unresolved Conflict (`UNRESOLVED`)**: Pulsing crimson-rose (`#F43F5E`) warning shell highlighting contradictory claims that require human inspection.
+2. **Center — 4-Layer Arena3D Knowledge Space (`x = -12.0, -4.0, +4.0, +12.0`)**:
+   * **4 Stratified Parallel Tilted Planes (`14.4 × 15.4`, `rotY = -0.34`, `rotX = 0.11`)**:
+     * **Layer 01 (`x = -12.0`, Cyan `#38BDF8`)**: **`01 · JARGON` (`TERM`)** — Domain acronyms and technical vocabulary rendered as luminous octahedra.
+     * **Layer 02 (`x = -4.0`, Blue `#60A5FA`)**: **`02 · CONCEPTS` (`CONCEPT`)** — Canonical semantic concepts rendered as icosahedra.
+     * **Layer 03 (`x = +4.0`, Violet `#A78BFA`)**: **`03 · ENTITIES` (`ENTITY`)** — Named architectures, frameworks, models, and systems rendered as dodecahedra.
+     * **Layer 04 (`x = +12.0`, Teal `#2DD4BF`)**: **`04 · WIKI` (`CLAIM` / `WIKI`)** — Grounded claims and synthesized Living Wiki statements rendered as torus nodes.
+   * **Slow, Calm Motion & Single-Pulse Edges**:
+     * Orbital angular velocities (`0.00065`, `-0.00052`, `0.00048`, `-0.00058`) and intra-plane force relaxation are intentionally slow and calm so users can read labels effortlessly.
+     * Each inter-layer or intra-layer filament carries **1 slow light pulse per edge**, accelerating only when traced or highlighted.
 
-3. **Right — White Hole (`x = +22, y = 0, z = 0`)**:
-   * **Visuals**: Radiant cyan-white synthesis core (`#ECFEFF` / `#38BDF8`) surrounded by counter-rotating teal/violet/blue harmonic rings and an outward-flowing stream of luminous knowledge particles.
-   * **Role**: Exit portal where user-approved knowledge crystallizes into the session's **Living Wiki**. Verified claims project delicate synthesis filaments into the White Hole.
-   * **Interactive Portal**: Clicking the White Hole in 3D or its `WHITE HOLE · WIKI` spatial pill opens the synthesized Living Wiki overview showing all seed and session-assimilated concepts and claims.
+3. **Right — White Hole (`x = +26.5, y = 0, z = 0`)**:
+   * **Visuals**: Pure outward-streaming particle fountain (`450–500` soft radial-glow cyan/teal particles, no solid sphere or torus rings).
+   * **Role**: Exit portal where approved knowledge crystallizes into the session's **Living Wiki**, connected to Layer 04 (`04 · WIKI`) via subtle teal synthesis threads.
 
 ---
 
-## 3. HUD Layout & Non-Occluding Overlay Ergonomics
+## 3. HUD Layout, 4-Layer Lens Header & Right Sidepanel Ergonomics
 
-To preserve the 3D spatial continuity of **Black Hole → Semantic Space → White Hole**, floating UI chrome is minimal, translucent, and strictly bounded so it never permanently covers the left or right portals:
-
-* **Top Telemetry & Constellation Lens Bar (`height: 52px`)**:
-  * **Left**: Project IDEA emblem + subtitle (`Dark 3D Knowledge Constellation`).
-  * **Center-Left**: Live **Execution & Verification Stage Badge** (`Idle`, `Ingesting`, `Aligning`, `Mechanical Check`, `Self-Correction`, `Ready for Review`, `Assimilated`) reflecting real backend/Argon pipeline states.
-  * **Center-Right**: Live graph counters (`Terms · Concepts · Claims`), interactive **Constellation Lenses** (`All`, `Terms`, `Concepts`, `Claims`, `Pending`), and a prominent `Review Diff (N)` action button when a ChangeSet is pending.
-  * **Right**: `Reset view` (smooth camera return), `Reset session` (restores seed graph), and active runtime badge (`gemini-4-argon`).
-* **Spatial Portal Pills (`top: 64px`)**:
-  * Left pill (`left: 20px`): `BLACK HOLE · SOURCE` with active URL/source badge.
-  * Center pill (`left: 50%`): Stratified orbital legend (`Terms → Concepts & Entities → Grounded Claims`).
-  * Right pill (`right: 20px`): `WHITE HOLE · WIKI` with verified node counter.
-* **Non-Occluding Knowledge Card & Diff Drawer (`#overlay-card`)**:
-  * Positioned as a centered, floating dark-glass panel above the prompt dock (`bottom: 108px`, `left: 50%`, `transform: translateX(-50%)`, `width: min(660px, calc(100vw - 380px))`, `max-height: min(430px, calc(100vh - 220px))`).
-  * Because its width leaves at least `190px` of open canvas on both the left and right margins (and includes a 1-click **Minimize / Collapse** toggle plus `ESC` / close button), **the right White Hole and left Black Hole remain continuously visible even while reviewing diffs or reading node evidence**.
-  * Contains three unified tabs:
-    1. **Query Answer (`#view-answer`)**: Grounded Argon synthesis, clickable inline citations `[1]`, referenced 3D node chips, and verification badges (`Mutated Wiki: False`).
-    2. **Node Evidence (`#view-node`)**: Selected node's layer/status badges, description, synonyms, connected 1-hop constellation neighbors (clickable to jump focus), and **Grounded Claims & Verbatim Quotes** with `Mechanical Quote Match` and section anchor metadata.
-    3. **Knowledge Diff (`#view-diff`)**: Interactive Argon pipeline trace (Turn-1 extraction, Mechanical Validator gate, Turn-2 `previous_interaction_id` self-correction), selective approval checkboxes for each `PROPOSED` concept/relation/claim, read-only isolation for `UNRESOLVED` conflicts and `Blocked` (`REJECTED`) claims, and `Approve Selected` / `Approve All` / `Reject` buttons.
+* **Top Telemetry, Pipeline Stepper & 4-Layer Lens Bar (`height: 48px`)**:
+  * **Left**: Project IDEA emblem + title + interactive **4-Layer Constellation Lens Pills** (`All Layers`, `01 Jargon` `#stat-terms-count`, `02 Concepts` `#stat-concepts-count`, `03 Entities` `#stat-entities-count`, `04 Wiki` `#stat-claims-count`, `Pending`).
+  * **Right**: Live **Pipeline Stage Stepper** (`Ingest → Align → Verify → Wiki | Query`), **Execution Stage Badge** (`#execution-stage-badge`), `Review Diff` shortcut (`#btn-open-pending-diff`), `Reset view`, and `Reset session`.
+* **Generous Full-Height Right Sidepanel (`#overlay-card`)**:
+  * Docked on the right side of the viewport (`position: fixed; top: 58px; right: 16px; bottom: 16px; width: min(520px, 38vw); min-width: 390px; max-height: calc(100vh - 74px); z-index: 35;`).
+  * When opened (`body.sidepanel-open`), `sceneManager.setSidepanelOpen(true)` smoothly shifts the 3D camera target (`defaultTargetPos.x = 5.5`) and re-centers `#prompt-dock` in the left 62% canvas area so the entire 4-layer constellation and both portals remain unobstructed.
+  * Contains three unified tabs with rich Markdown rendering (`renderMarkdownHtml`):
+    1. **Answer (`#view-answer`)**: Structured Markdown synthesis, provenance banner, and clickable citation cards.
+    2. **Knowledge Card (`#view-node`)**: Layer/status badges, synonyms, Markdown description, Living Wiki synthesis box (`#node-wiki-synthesis-box`), verbatim source quote (`#modal-quote`), and clickable 1-hop orbital neighbors.
+    3. **Knowledge Diff (`#view-diff`)**: Argon verification trace (`#pipeline-trace-card`), candidate items organized by the **4 Arena3D Layers** (`01 · JARGON`, `02 · CONCEPTS`, `03 · ENTITIES`, `04 · WIKI`) plus semantic relations, selective approval checkboxes (`.diff-concept-cb`, `.diff-relation-cb`, `.diff-claim-cb`), and isolated `Held Back` / `Blocked` sections.
 * **Bottom Single Prompt Composer (`#prompt-dock`, `bottom: 18px`)**:
-  * Always visible at the bottom center (`width: min(720px, calc(100vw - 32px))`).
-  * Single unified input accepting natural-language questions, public URLs (`https://...`), or mixed `URL + question` prompts, with an automatic mode indicator (`ASK WIKI`, `INGEST URL`, `INGEST + ASK`, `TEXT DOC`) and quick-try chips for 1-click demo verification.
-
----
-
-## 4. Interactive Camera & Constellation Physics
-
-1. **Free 3D Orbit, Pan & Zoom**:
-   * Left-drag orbits 360°, scroll wheel zooms (`minDistance: 8`, `maxDistance: 75`), right-drag pans.
-2. **Node Click → Smooth Camera Focus (`click-to-focus`)**:
-   * Clicking any 3D node (or its floating label pill) pauses orbital rotation (`isRotationPaused = true`), smoothly interpolates `controls.target` toward the clicked node's 3D coordinates, and glides `camera.position` to an optimal viewing offset framing the node and its connected 1-hop edges.
-   * Non-connected background nodes dim softly (`opacity: 0.16`) while the selected node, its 1-hop neighbors, and the active provenance path from the Black Hole or toward the White Hole illuminate with accelerated edge particles.
-3. **Approval Assimilation Burst**:
-   * Approving a ChangeSet triggers a luminous cyan/teal particle burst on the newly approved nodes, transitions their geometry from pulsing Amber (`PROPOSED`) to steady Verified luminescence, and establishes synthesis filaments into the right White Hole.
-4. **Reset View (`resetViewCamera`)**:
-   * Clicking empty space, closing the card, or pressing `Reset view` smoothly interpolates the camera back to `(0, 11, 40)` and resumes gentle orbital rotation.
+  * Includes live prompt token preprocessing preview (`#prompt-preprocess-bar`) that scatters meaningful tokens into the 3D Black Hole as you type, optional raw text drawer (`#raw-source-drawer`), quick-try preset pills, and a unified `Ask` / `Ingest + Ask` input bar.

@@ -108,7 +108,7 @@ async def run_benchmark():
     temp_store = KnowledgeStore()
     pre_ontology = {
         "concepts": [c.model_dump() for c in temp_store.concepts.values()],
-        "relations": [r.model_dump() for r in temp_store.relations],
+        "relations": [r.model_dump() for r in temp_store.relations.values()],
     }
     pre_query_res = await client.query_knowledge(
         question="How does the Interactions API manage state in Gemini 4 Argon?",
@@ -130,7 +130,7 @@ async def run_benchmark():
 
     post_ontology = {
         "concepts": [c.model_dump() for c in temp_store.concepts.values()],
-        "relations": [r.model_dump() for r in temp_store.relations],
+        "relations": [r.model_dump() for r in temp_store.relations.values()],
     }
     post_query_res = await client.query_knowledge(
         question="What prompt cache discount does the Interactions API grant according to our session library?",
@@ -146,8 +146,25 @@ async def run_benchmark():
         "Expected post-approval query to cite newly approved session knowledge!"
     )
 
-    print("\nALL 5 BENCHMARK TESTS PASSED SUCCESSFULLY!")
+    print("\n--- TEST 6: 4-Layer Semantic Jargon Scan (gemini-3.8-flash) & Adversarial Isolation ---")
+    state_snapshot = temp_store.get_state_snapshot()
+    assert state_snapshot["rings_count"] == 4
+    assert set(state_snapshot["layer_counts"].keys()) == {"jargon", "concepts", "entities", "wiki"}
+
+    scan_res = await client.scan_jargon(
+        doc_data={
+            "title": "Flash Jargon Benchmark",
+            "full_text": "PagedAttention partitions KV-cache blocks while OS Page Table maps kernel virtual memory.",
+        },
+        seed_ontology=post_ontology,
+    )
+    print(f"Flash Jargon Scan Model: {scan_res.model_used} | Candidates: {len(scan_res.scan.candidates)}")
+    assert scan_res.model_used == "gemini-3.8-flash"
+    assert any(c.action == "UNRESOLVED" for c in scan_res.scan.candidates)
+
+    print("\nALL 6 BENCHMARK TESTS PASSED SUCCESSFULLY!")
 
 
 if __name__ == "__main__":
     asyncio.run(run_benchmark())
+

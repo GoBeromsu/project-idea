@@ -52,6 +52,14 @@ def _validate_ip_address(ip_str: str) -> None:
     except ValueError as exc:
         raise ValueError("Blocked unsafe or non-public URL host") from exc
 
+    if isinstance(ip_obj, ipaddress.IPv6Address):
+        if ip_obj.ipv4_mapped:
+            return _validate_ip_address(str(ip_obj.ipv4_mapped))
+        nat64_well_known = ipaddress.IPv6Network("64:ff9b::/96")
+        if ip_obj in nat64_well_known:
+            embedded_v4 = ipaddress.IPv4Address(ip_obj.packed[-4:])
+            return _validate_ip_address(str(embedded_v4))
+
     if (
         ip_obj.is_private
         or ip_obj.is_loopback
