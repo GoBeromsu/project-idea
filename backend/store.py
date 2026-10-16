@@ -49,6 +49,13 @@ def verify_quote_in_source_text(source_text: str, quote: str) -> bool:
     return False
 
 
+def _normalize_jargon_key(text: str) -> str:
+    if not text:
+        return ""
+    cleaned = re.sub(r"\([^)]*\)", " ", text)
+    return re.sub(r"[^a-z0-9]+", "", cleaned.lower())
+
+
 class KnowledgeStore:
     def __init__(self, seed_path: Optional[str] = None):
         self.seed_path = self._resolve_seed_path(seed_path)
@@ -59,6 +66,20 @@ class KnowledgeStore:
         self.changeset_sources: Dict[str, str] = {}
         self.traces: Dict[str, Dict] = {}
         self._load_seed()
+
+    def resolve_canonical_concept(self, name_or_synonym: str, synonyms: Optional[List[str]] = None) -> Optional[Concept]:
+        candidates = [name_or_synonym] + list(synonyms or [])
+        norm_targets = {_normalize_jargon_key(x) for x in candidates if _normalize_jargon_key(x)}
+        if not norm_targets:
+            return None
+        for concept in self.concepts.values():
+            keys = {_normalize_jargon_key(concept.name), _normalize_jargon_key(concept.id)}
+            for s in concept.synonyms:
+                keys.add(_normalize_jargon_key(s))
+            keys.discard("")
+            if norm_targets & keys:
+                return concept
+        return None
 
     @staticmethod
     def _resolve_seed_path(seed_path: Optional[str] = None) -> str:
@@ -107,12 +128,23 @@ class KnowledgeStore:
         }
 
     def get_state(self) -> Dict[str, Any]:
+        jargon_count = sum(1 for c in self.concepts.values() if c.node_type == "TERM")
+        concept_count = sum(1 for c in self.concepts.values() if c.node_type == "CONCEPT")
+        entity_count = sum(1 for c in self.concepts.values() if c.node_type == "ENTITY")
+        wiki_claim_count = len(self.claims)
         return {
             "concepts": [c.model_dump() for c in self.concepts.values()],
             "relations": [r.model_dump() for r in self.relations.values()],
             "claims": [cl.model_dump() for cl in self.claims.values()],
             "pending_changesets": [cs.model_dump() for cs in self.changesets.values() if cs.status == "PENDING"],
             "all_changesets": [cs.model_dump() for cs in self.changesets.values()],
+            "rings_count": 4,
+            "layer_counts": {
+                "jargon": jargon_count,
+                "concepts": concept_count,
+                "entities": entity_count,
+                "wiki": wiki_claim_count,
+            },
         }
 
     def add_changeset(
@@ -127,6 +159,27 @@ class KnowledgeStore:
 
         if isinstance(source_text, str):
             self.changeset_sources[cs.id] = source_text
+
+        id_remap: Dict[str, str] = {}
+        for c in cs.proposed_concepts:
+            if c.status == VerificationStatus.UNRESOLVED or c.action == "UNRESOLVED":
+                continue
+            matched = self.resolve_canonical_concept(c.name, c.synonyms)
+            if matched and matched.id != c.id:
+                if matched.node_type == c.node_type or c.action == "MATCH":
+                    id_remap[c.id] = matched.id
+                    c.id = matched.id
+                    c.action = "MATCH"
+
+        if id_remap:
+            for cl in cs.proposed_claims:
+                if cl.concept_id in id_remap:
+                    cl.concept_id = id_remap[cl.concept_id]
+            for r in cs.proposed_relations:
+                if r.source_id in id_remap:
+                    r.source_id = id_remap[r.source_id]
+                if r.target_id in id_remap:
+                    r.target_id = id_remap[r.target_id]
 
         verified_proposed: List[FactClaim] = []
         blocked_ids = {b.id for b in cs.blocked_claims}

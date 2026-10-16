@@ -28,6 +28,22 @@ class ModelServiceClient:
             resp.raise_for_status()
             return resp.json()
 
+    async def scan_jargon(
+        self,
+        doc_data: Dict[str, Any],
+        seed_ontology: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        async with self._client() as client:
+            resp = await client.post(
+                f"{self.base_url}/api/v1/jargon-scan",
+                json={
+                    "doc_data": doc_data,
+                    "seed_ontology": seed_ontology,
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()
+
     async def extract_turn1(
         self,
         doc_data: Dict[str, Any],
@@ -142,6 +158,13 @@ class ModelServiceClient:
         if isinstance(extraction, dict) and extraction.get("answer") and not changeset.answer:
             changeset.answer = extraction.get("answer")
 
+        layer_distribution = {
+            "jargon": sum(1 for c in changeset.proposed_concepts if c.node_type == "TERM"),
+            "concepts": sum(1 for c in changeset.proposed_concepts if c.node_type == "CONCEPT"),
+            "entities": sum(1 for c in changeset.proposed_concepts if c.node_type == "ENTITY"),
+            "wiki": len(changeset.proposed_claims),
+        }
+
         trace = PipelineTrace(
             turn1_interaction_id=turn1_id,
             turn2_interaction_id=turn2_id,
@@ -149,6 +172,8 @@ class ModelServiceClient:
             initial_failures_count=initial_failures_count,
             remaining_failures_count=remaining_failures_count,
             thought_summaries=thought_summaries,
+            jargon_candidates=[c.get("term", "") for c in doc_data.get("jargon_candidates", []) if isinstance(c, dict) and c.get("term")],
+            layer_distribution=layer_distribution,
         )
         return changeset, trace
 

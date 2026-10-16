@@ -14,6 +14,8 @@ try:
         CorrectResponse,
         ExtractRequest,
         ExtractResponse,
+        JargonScanRequest,
+        JargonScanResponse,
         ModelQueryRequest,
         ModelQueryResponse,
         VerifyQuoteRequest,
@@ -30,6 +32,8 @@ except ImportError:
         CorrectResponse,
         ExtractRequest,
         ExtractResponse,
+        JargonScanRequest,
+        JargonScanResponse,
         ModelQueryRequest,
         ModelQueryResponse,
         VerifyQuoteRequest,
@@ -67,6 +71,8 @@ def health():
         "tier": "model",
         "service": "project-idea-model",
         "model": "gemini-4-argon",
+        "fast_model": "gemini-3.8-flash",
+        "layers": 4,
     }
 
 
@@ -80,6 +86,21 @@ def verify_quote_endpoint(req: VerifyQuoteRequest) -> VerifyQuoteResponse:
     return VerifyQuoteResponse(valid=valid, error=err)
 
 
+@app.post("/api/v1/jargon-scan", response_model=JargonScanResponse)
+def jargon_scan_endpoint(req: JargonScanRequest) -> JargonScanResponse:
+    source_text = req.source_text or (req.doc_data.get("full_text") if req.doc_data else None)
+    if not source_text:
+        raise HTTPException(status_code=400, detail="Request must include 'source_text' or 'doc_data.full_text'.")
+    title = (req.doc_data.get("title") if req.doc_data else None) or req.title or "Untitled Document"
+    engine = get_engine()
+    res = engine.scan_jargon_flash(
+        source_text=source_text,
+        seed_ontology=req.seed_ontology,
+        title=title,
+    )
+    return JargonScanResponse(model_used=res.model_used, scan=res, scan_result=res)
+
+
 @app.post("/api/v1/extract", response_model=ExtractResponse)
 def extract_endpoint(req: ExtractRequest) -> ExtractResponse:
     if "full_text" not in req.doc_data:
@@ -90,6 +111,7 @@ def extract_endpoint(req: ExtractRequest) -> ExtractResponse:
         seed_ontology=req.seed_ontology,
         existing_claims=req.existing_claims,
         question=req.question,
+        enable_flash_jargon_scan=req.enable_flash_jargon_scan,
     )
 
 
@@ -110,7 +132,7 @@ def build_changeset_endpoint(req: BuildChangeSetRequest) -> ChangeSet:
         raise HTTPException(status_code=400, detail="doc_data must include 'full_text'.")
     engine = get_engine()
     return engine.build_changeset(
-        doc_data=req.doc_data,
+        doc_data=doc_data if (doc_data := req.doc_data) else req.doc_data,
         extraction=req.extraction,
         question=req.question,
         seed_ontology=req.seed_ontology,

@@ -169,13 +169,16 @@ class JargonScanResult(BaseModel):
 
 
 class JargonScanRequest(BaseModel):
-    source_text: str
+    doc_data: Optional[Dict[str, Any]] = None
+    source_text: Optional[str] = None
     title: str = "Untitled Document"
     seed_ontology: Dict[str, Any] = Field(default_factory=dict)
 
 
 class JargonScanResponse(BaseModel, _AwaitableModelMixin):
-    scan_result: JargonScanResult
+    model_used: str = "gemini-3.8-flash"
+    scan: JargonScanResult
+    scan_result: Optional[JargonScanResult] = None
 
 
 class ExtractRequest(BaseModel):
@@ -224,7 +227,7 @@ class PipelineTrace(BaseModel):
     thought_summaries: List[str] = Field(default_factory=list)
     execution_stage: str = "Complete"
     flash_scan_interaction_id: Optional[str] = None
-    jargon_candidates: List[Dict[str, Any]] = Field(default_factory=list)
+    jargon_candidates: List[Any] = Field(default_factory=list)
     adversarial_flags: List[Dict[str, Any]] = Field(default_factory=list)
     layer_distribution: Dict[str, int] = Field(default_factory=dict)
 

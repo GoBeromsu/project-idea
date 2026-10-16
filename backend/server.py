@@ -11,6 +11,7 @@ try:
     from backend.schemas import (
         ApproveChangeSetRequest,
         AssimilateRequest,
+        JargonScanRequest,
         QueryRequest,
     )
     from backend.store import KnowledgeStore
@@ -20,6 +21,7 @@ except ImportError:
     from schemas import (
         ApproveChangeSetRequest,
         AssimilateRequest,
+        JargonScanRequest,
         QueryRequest,
     )
     from store import KnowledgeStore
@@ -57,6 +59,8 @@ def health():
         "tier": "backend",
         "service": "project-idea",
         "model": "gemini-4-argon",
+        "fast_model": "gemini-3.8-flash",
+        "layers": 4,
         "model_api_url": model_client.base_url,
     }
 
@@ -64,6 +68,28 @@ def health():
 @app.get("/api/state")
 def get_state():
     return store.get_state()
+
+
+@app.post("/api/jargon-scan")
+async def jargon_scan(req: JargonScanRequest):
+    try:
+        doc_data = await prepare_document(
+            text=req.text,
+            url=req.url,
+            title=req.title,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    try:
+        res = await model_client.scan_jargon(
+            doc_data=doc_data,
+            seed_ontology=store.get_seed_ontology(),
+        )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"Model service error: {exc}") from exc
+
+    return res
 
 
 @app.post("/api/query")
@@ -122,6 +148,7 @@ async def assimilate_document(req: AssimilateRequest):
             "resolved_url": doc_data.get("resolved_url"),
             "length": len(doc_data["full_text"]),
             "section_anchors": doc_data.get("section_anchors", []),
+            "jargon_candidates": doc_data.get("jargon_candidates", []),
         },
         "question": req.question,
         "answer": changeset.answer,

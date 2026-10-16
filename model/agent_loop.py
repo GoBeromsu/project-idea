@@ -191,6 +191,18 @@ class AssimilationEngine:
         return summaries
 
     @staticmethod
+    def _extract_text(interaction: Any) -> str:
+        out_text = getattr(interaction, "output_text", None)
+        if isinstance(out_text, str) and out_text.strip():
+            return out_text
+        outputs = getattr(interaction, "outputs", None) or []
+        for out in reversed(outputs):
+            txt = getattr(out, "text", None)
+            if isinstance(txt, str) and txt.strip():
+                return txt
+        return ""
+
+    @staticmethod
     def _parse_extraction(raw_output: str) -> AssimilationExtraction:
         try:
             return AssimilationExtraction.model_validate_json(raw_output)
@@ -380,6 +392,11 @@ class AssimilationEngine:
             {"id": c["id"], "name": c["name"], "synonyms": c["synonyms"], "node_type": c["node_type"]}
             for c in seed_concepts
         ]
+        flash_instruction = (
+            "You are the Fast Semantic Jargon Scanner (gemini-3.8-flash) for Project IDEA. "
+            "Extract domain jargon, acronyms, concepts, and entities across 4 layers (TERM, CONCEPT, ENTITY, CLAIM). "
+            "Return ONLY valid JSON matching the schema with a 'candidates' array."
+        )
         prompt = f"""Scan the following document for domain jargon, acronyms, and technical terms (Layer 1: TERM).
 Match them against the Seed Ontology where appropriate, propose novel jargon terms, and flag cross-domain false friends (e.g. OS 'Page Table' vs LLM 'PagedAttention') as UNRESOLVED.
 
@@ -393,7 +410,7 @@ Document ({title}):
             interaction = self.client.interactions.create(
                 model=self.fast_model,
                 input=prompt,
-                system_instruction=SYSTEM_INSTRUCTION,
+                system_instruction=flash_instruction,
                 generation_config={
                     "thinking_level": "low",
                     "response_mime_type": "application/json",
@@ -401,12 +418,20 @@ Document ({title}):
                 },
             )
             int_id = getattr(interaction, "id", "") or f"int_flash_{abs(hash(source_text)) % 100000}"
-            parsed = _JargonScanLLMOutput.model_validate_json(interaction.output_text)
+            raw_json = self._extract_text(interaction).strip()
+            raw_json = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw_json).strip()
+            parsed = _JargonScanLLMOutput.model_validate_json(raw_json)
+            fallback_res = self._fallback_scan_jargon(source_text, seed_ontology, interaction_id=int_id)
+            merged_candidates = list(parsed.candidates)
+            existing_terms = {normalize_jargon_key(c.term) for c in merged_candidates}
+            for fc in fallback_res.candidates:
+                if normalize_jargon_key(fc.term) not in existing_terms:
+                    merged_candidates.append(fc)
             return JargonScanResult(
                 model_used=self.fast_model,
                 thinking_level="low",
                 interaction_id=int_id,
-                candidates=parsed.candidates,
+                candidates=merged_candidates,
             )
         except AssertionError:
             raise

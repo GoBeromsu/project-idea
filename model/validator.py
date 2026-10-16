@@ -49,10 +49,10 @@ def verify_quote_in_source(
 
 
 PROMPT_INJECTION_PATTERNS = [
-    r"ignore\s+(?:all\s+)?(?:previous|prior|above)\s+(?:instructions|prompts|rules|gates)",
-    r"disregard\s+(?:all\s+)?(?:previous|prior|system)\s+(?:instructions|rules|gates)",
+    r"ignore\s+(?:all\s+)?(?:previous|prior|above|verification)\s+(?:instructions|prompts|rules|gates)",
+    r"disregard\s+(?:all\s+)?(?:previous|prior|system|verification)\s+(?:instructions|rules|gates)",
     r"override\s+(?:verification|validation|security|system)\s+(?:gate|gates|rules|prompt)",
-    r"mark\s+(?:all\s+|this\s+)?(?:claim|claims|ungrounded)\s+as\s+verified",
+    r"mark\s+(?:all\s+|this\s+|every\s+)?(?:claim|claims|ungrounded)\s+as\s+verified",
     r"system\s*override\s*:",
     r"<\s*script\b",
 ]
@@ -141,7 +141,7 @@ def _slugify_concept_id(name: str) -> str:
 
 
 def validate_semantic_jargon_alignment(
-    extraction: AssimilationExtraction,
+    extraction: Any,
     seed_ontology: Optional[Dict[str, Any]] = None,
 ) -> List[Dict[str, Any]]:
     warnings: List[Dict[str, Any]] = []
@@ -153,25 +153,42 @@ def validate_semantic_jargon_alignment(
             elif getattr(c, "id", None):
                 seed_map[c.id] = c.model_dump() if hasattr(c, "model_dump") else {}
 
-    for c in extraction.aligned_concepts:
-        norm_name = normalize_jargon_key(c.name)
-        cand_aliases = getattr(c, "aliases", None) or getattr(c, "synonyms", None) or []
+    if isinstance(extraction, dict):
+        raw_concepts = extraction.get("aligned_concepts") or extraction.get("concepts") or []
+    else:
+        raw_concepts = getattr(extraction, "aligned_concepts", []) or []
+
+    for c in raw_concepts:
+        c_name = c.get("name", "") if isinstance(c, dict) else getattr(c, "name", "")
+        c_id = c.get("id") if isinstance(c, dict) else getattr(c, "id", None)
+        c_action = c.get("action", "PROPOSE") if isinstance(c, dict) else getattr(c, "action", "PROPOSE")
+        if isinstance(c, dict):
+            cand_aliases = c.get("aliases") or c.get("synonyms") or []
+        else:
+            cand_aliases = getattr(c, "aliases", None) or getattr(c, "synonyms", None) or []
+
+        norm_name = normalize_jargon_key(c_name)
         all_keys = [norm_name] + [normalize_jargon_key(a) for a in cand_aliases if a]
+        triggered_false_friend = False
         for key in all_keys:
             if key in CROSS_DOMAIN_FALSE_FRIENDS:
                 rule = CROSS_DOMAIN_FALSE_FRIENDS[key]
-                if c.action == "MATCH" and (not c.id or c.id in rule["conflicting_canonical_ids"]):
+                if c_action == "MATCH" and (not c_id or c_id in rule["conflicting_canonical_ids"]):
                     warnings.append(
                         {
                             "type": "semantic_jargon_collision",
-                            "concept_name": c.name,
-                            "concept_id": c.id,
+                            "failure_type": "SEMANTIC_JARGON_COLLISION",
+                            "concept_name": c_name,
+                            "concept_id": c_id,
                             "error": rule["reason"],
                         }
                     )
+                    triggered_false_friend = True
                 break
-        if c.action == "MATCH" and c.id and c.id in seed_map:
-            seed_node = seed_map[c.id]
+        if triggered_false_friend:
+            continue
+        if c_action == "MATCH" and c_id and c_id in seed_map:
+            seed_node = seed_map[c_id]
             seed_keys = {normalize_jargon_key(seed_node.get("name", ""))}
             raw_seed_aliases = seed_node.get("aliases", []) or seed_node.get("synonyms", []) or []
             for a in raw_seed_aliases:
@@ -190,9 +207,10 @@ def validate_semantic_jargon_alignment(
                 warnings.append(
                     {
                         "type": "unverified_jargon_synonym_merge",
-                        "concept_name": c.name,
-                        "concept_id": c.id,
-                        "error": f"Concept '{c.name}' attempted MATCH to '{c.id}' without lexical or alias overlap in Semantic Layer.",
+                        "failure_type": "SEMANTIC_JARGON_COLLISION",
+                        "concept_name": c_name,
+                        "concept_id": c_id,
+                        "error": f"Concept '{c_name}' attempted MATCH to '{c_id}' without lexical or alias overlap in Semantic Layer.",
                     }
                 )
     return warnings
