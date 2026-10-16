@@ -43,11 +43,31 @@
         const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
         const colorStr = '#' + hexColor.toString(16).padStart(6, '0');
         gradient.addColorStop(0, '#ffffff');
-        gradient.addColorStop(0.2, colorStr);
+        gradient.addColorStop(0.18, colorStr);
+        gradient.addColorStop(0.55, colorStr + '44');
         gradient.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 64, 64);
         return new THREE.CanvasTexture(canvas);
+    }
+    let sharedParticleTex = null;
+    function getParticleTexture() {
+        if (sharedParticleTex) return sharedParticleTex;
+        if (typeof document === 'undefined' || !document.createElement) return null;
+        const canvas = document.createElement('canvas');
+        canvas.width = 32;
+        canvas.height = 32;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+        const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+        grad.addColorStop(0, 'rgba(255,255,255,1)');
+        grad.addColorStop(0.35, 'rgba(255,255,255,0.85)');
+        grad.addColorStop(0.7, 'rgba(255,255,255,0.2)');
+        grad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 32, 32);
+        sharedParticleTex = new THREE.CanvasTexture(canvas);
+        return sharedParticleTex;
     }
     class IdeaSceneManager {
         constructor(containerEl, callbacks = {}) {
@@ -70,11 +90,6 @@
             this.inflowThreads = [];
             this.synthesisThreads = [];
             this.edgePulses = [];
-            this.rings = [
-                { id: "ring_terms", x: -7.5, radius: 7.2, tilt: 0.18, speed: 0.0035, type: "TERM", label: "Domain Terms" },
-                { id: "ring_concepts", x: 0.0, radius: 9.2, tilt: -0.12, speed: -0.0025, type: "CONCEPT", label: "Concepts & Entities" },
-                { id: "ring_claims", x: 7.5, radius: 7.8, tilt: 0.22, speed: 0.0030, type: "CLAIM", label: "Grounded Claims" }
-            ];
             this.clock = new (typeof THREE !== "undefined" ? THREE.Clock : class { getDelta() { return 0.016; } getElapsedTime() { return 0; } })();
             this.animatingAbsorptions = [];
             this.pointerDownPos = { x: 0, y: 0 };
@@ -87,7 +102,8 @@
                 this.buildEnvironment();
                 this.buildBlackHole();
                 this.buildWhiteHole();
-                this.buildOrbitalTracks();
+                this.buildArenaPlanes();
+                this.buildGlobalStream();
                 this.initLabelsOverlay();
                 this.bindEvents();
                 this.startRenderLoop();
@@ -135,25 +151,28 @@
             this.scene.add(this.graphGroup);
         }
         buildEnvironment() {
+            const pTex = getParticleTexture();
             const gridHelper = new THREE.GridHelper(68, 34, 0x1e293b, 0x0f172a);
             gridHelper.position.y = -11.0;
-            gridHelper.material.opacity = 0.16;
+            gridHelper.material.opacity = 0.14;
             gridHelper.material.transparent = true;
             this.scene.add(gridHelper);
             const dustCount = 260;
             const dustGeo = new THREE.BufferGeometry();
             const dustPos = new Float32Array(dustCount * 3);
             for (let i = 0; i < dustCount; i++) {
-                dustPos[i * 3 + 0] = (Math.random() - 0.5) * 60;
-                dustPos[i * 3 + 1] = (Math.random() - 0.5) * 24;
-                dustPos[i * 3 + 2] = (Math.random() - 0.5) * 30;
+                dustPos[i * 3 + 0] = (Math.random() - 0.5) * 64;
+                dustPos[i * 3 + 1] = (Math.random() - 0.5) * 26;
+                dustPos[i * 3 + 2] = (Math.random() - 0.5) * 32;
             }
             dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
             const dustMat = new THREE.PointsMaterial({
                 color: 0x60a5fa,
-                size: 0.22,
+                 map: pTex,
+                size: 0.34,
                 transparent: true,
-                opacity: 0.42,
+                opacity: 0.48,
+                depthWrite: false,
                 blending: THREE.AdditiveBlending
             });
             this.ambientDust = new THREE.Points(dustGeo, dustMat);
@@ -169,29 +188,19 @@
             starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
             const starMat = new THREE.PointsMaterial({
                 color: 0xe2e8f0,
-                size: 0.14,
+                map: pTex,
+                size: 0.24,
                 transparent: true,
-                opacity: 0.30
+                opacity: 0.38,
+                depthWrite: false
             });
             this.starfield = new THREE.Points(starGeo, starMat);
             this.scene.add(this.starfield);
         }
         buildBlackHole() {
+            const pTex = getParticleTexture();
             this.blackHoleGroup = new THREE.Group();
             this.blackHoleGroup.position.set(-22, 0, 0);
-            const coreGeo = new THREE.SphereGeometry(2.35, 36, 36);
-            const coreMat = new THREE.MeshStandardMaterial({
-                color: 0x020308,
-                roughness: 0.1,
-                metalness: 0.9
-            });
-            this.blackHoleCore = new THREE.Mesh(coreGeo, coreMat);
-            this.blackHoleGroup.add(this.blackHoleCore);
-            const rimGeo = new THREE.RingGeometry(2.36, 2.58, 64);
-            const rimMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide });
-            const rimMesh = new THREE.Mesh(rimGeo, rimMat);
-            rimMesh.rotation.x = Math.PI / 4;
-            this.blackHoleGroup.add(rimMesh);
             const hitGeo = new THREE.SphereGeometry(3.4, 16, 16);
             const hitMat = new THREE.MeshBasicMaterial({ visible: false, wireframe: true });
             this.blackHoleHitMesh = new THREE.Mesh(hitGeo, hitMat);
@@ -200,73 +209,52 @@
                 name: "Black Hole · Source Input",
                 node_type: "PORTAL",
                 role: "source_portal",
-                description: "Ingests external URLs and technical documents into candidate knowledge orbits."
+                description: "Ingests external URLs and technical documents into candidate knowledge layers."
             };
             this.blackHoleGroup.add(this.blackHoleHitMesh);
             const glowTex = createGlowTexture(0x38bdf8);
             if (glowTex) {
-                const glowMat = new THREE.SpriteMaterial({ map: glowTex, color: 0x38bdf8, transparent: true, opacity: 0.38, blending: THREE.AdditiveBlending });
+                const glowMat = new THREE.SpriteMaterial({ map: glowTex, color: 0x38bdf8, transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false });
                 const glowSprite = new THREE.Sprite(glowMat);
-                glowSprite.scale.set(11.5, 11.5, 1);
+                glowSprite.scale.set(11.0, 11.0, 1);
                 this.blackHoleGroup.add(glowSprite);
             }
-            const disk1Geo = new THREE.RingGeometry(2.6, 4.2, 48);
-            const disk1Mat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending });
-            this.bhDisk1 = new THREE.Mesh(disk1Geo, disk1Mat);
-            this.bhDisk1.rotation.x = Math.PI / 2.6;
-            this.bhDisk1.rotation.y = 0.25;
-            this.blackHoleGroup.add(this.bhDisk1);
-            const disk2Geo = new THREE.RingGeometry(3.6, 5.3, 48);
-            const disk2Mat = new THREE.MeshBasicMaterial({ color: 0x60a5fa, side: THREE.DoubleSide, transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending });
-            this.bhDisk2 = new THREE.Mesh(disk2Geo, disk2Mat);
-            this.bhDisk2.rotation.x = -Math.PI / 2.4;
-            this.bhDisk2.rotation.z = 0.35;
-            this.blackHoleGroup.add(this.bhDisk2);
-            const disk3Geo = new THREE.RingGeometry(4.8, 6.2, 48);
-            const disk3Mat = new THREE.MeshBasicMaterial({ color: 0xa78bfa, side: THREE.DoubleSide, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending });
-            this.bhDisk3 = new THREE.Mesh(disk3Geo, disk3Mat);
-            this.bhDisk3.rotation.x = Math.PI / 2.2;
-            this.bhDisk3.rotation.z = -0.15;
-            this.blackHoleGroup.add(this.bhDisk3);
-            const pCount = 300;
+            const pCount = 560;
+            this.bhVortexData = [];
             const pPositions = new Float32Array(pCount * 3);
-            this.bhParticleAngles = new Float32Array(pCount);
-            this.bhParticleRadii = new Float32Array(pCount);
-            this.bhParticleSpeeds = new Float32Array(pCount);
-            this.bhParticleHeights = new Float32Array(pCount);
             for (let i = 0; i < pCount; i++) {
-                this.bhParticleAngles[i] = Math.random() * Math.PI * 2;
-                this.bhParticleRadii[i] = 2.6 + Math.random() * 5.5;
-                this.bhParticleSpeeds[i] = 0.015 + Math.random() * 0.035;
-                this.bhParticleHeights[i] = (Math.random() - 0.5) * 2.2;
-                pPositions[i * 3 + 0] = Math.cos(this.bhParticleAngles[i]) * this.bhParticleRadii[i];
-                pPositions[i * 3 + 1] = this.bhParticleHeights[i];
-                pPositions[i * 3 + 2] = Math.sin(this.bhParticleAngles[i]) * this.bhParticleRadii[i];
+                const progress = Math.random();
+                const angle = Math.random() * Math.PI * 2;
+                const rSpread = 0.35 + Math.random() * 5.2;
+                const speed = 0.012 + Math.random() * 0.016;
+                const spin = 0.035 + Math.random() * 0.045;
+                this.bhVortexData.push({ progress, angle, rSpread, speed, spin });
+                const x = -11.0 + progress * 16.0;
+                const funnelEnvelope = Math.max(0.18, 1.0 - progress * 0.82);
+                const r = rSpread * funnelEnvelope;
+                pPositions[i * 3 + 0] = x;
+                pPositions[i * 3 + 1] = Math.cos(angle) * r;
+                pPositions[i * 3 + 2] = Math.sin(angle) * r;
             }
             const pGeo = new THREE.BufferGeometry();
             pGeo.setAttribute("position", new THREE.BufferAttribute(pPositions, 3));
             const pMat = new THREE.PointsMaterial({
                 color: 0x38bdf8,
-                size: 0.32,
+                map: pTex,
+                size: 0.42,
                 transparent: true,
-                opacity: 0.75,
+                opacity: 0.88,
+                depthWrite: false,
                 blending: THREE.AdditiveBlending
             });
-            this.bhInflowParticles = new THREE.Points(pGeo, pMat);
-            this.blackHoleGroup.add(this.bhInflowParticles);
+            this.bhVortexParticles = new THREE.Points(pGeo, pMat);
+            this.blackHoleGroup.add(this.bhVortexParticles);
             this.scene.add(this.blackHoleGroup);
         }
         buildWhiteHole() {
+            const pTex = getParticleTexture();
             this.whiteHoleGroup = new THREE.Group();
             this.whiteHoleGroup.position.set(22, 0, 0);
-            const coreGeo = new THREE.SphereGeometry(2.2, 36, 36);
-            const coreMat = new THREE.MeshStandardMaterial({
-                color: 0x0b2938,
-                emissive: 0x2dd4bf,
-                emissiveIntensity: 0.75
-            });
-            this.whiteHoleCore = new THREE.Mesh(coreGeo, coreMat);
-            this.whiteHoleGroup.add(this.whiteHoleCore);
             const hitGeo = new THREE.SphereGeometry(3.4, 16, 16);
             const hitMat = new THREE.MeshBasicMaterial({ visible: false, wireframe: true });
             this.whiteHoleHitMesh = new THREE.Mesh(hitGeo, hitMat);
@@ -280,75 +268,97 @@
             this.whiteHoleGroup.add(this.whiteHoleHitMesh);
             const glowTex = createGlowTexture(0x2dd4bf);
             if (glowTex) {
-                const glowMat = new THREE.SpriteMaterial({ map: glowTex, color: 0x2dd4bf, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending });
+                const glowMat = new THREE.SpriteMaterial({ map: glowTex, color: 0x2dd4bf, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false });
                 const glowSprite = new THREE.Sprite(glowMat);
-                glowSprite.scale.set(12.0, 12.0, 1);
+                glowSprite.scale.set(11.5, 11.5, 1);
                 this.whiteHoleGroup.add(glowSprite);
             }
-            const ring1Geo = new THREE.RingGeometry(2.4, 4.3, 48);
-            const ring1Mat = new THREE.MeshBasicMaterial({ color: 0x2dd4bf, side: THREE.DoubleSide, transparent: true, opacity: 0.68, blending: THREE.AdditiveBlending });
-            this.whRing1 = new THREE.Mesh(ring1Geo, ring1Mat);
-            this.whRing1.rotation.x = Math.PI / 2.3;
-            this.whRing1.rotation.y = -0.2;
-            this.whiteHoleGroup.add(this.whRing1);
-            const ring2Geo = new THREE.RingGeometry(3.5, 5.3, 48);
-            const ring2Mat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending });
-            this.whRing2 = new THREE.Mesh(ring2Geo, ring2Mat);
-            this.whRing2.rotation.x = -Math.PI / 2.5;
-            this.whRing2.rotation.z = -0.25;
-            this.whiteHoleGroup.add(this.whRing2);
-            const ring3Geo = new THREE.RingGeometry(4.7, 6.1, 48);
-            const ring3Mat = new THREE.MeshBasicMaterial({ color: 0xa78bfa, side: THREE.DoubleSide, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending });
-            this.whRing3 = new THREE.Mesh(ring3Geo, ring3Mat);
-            this.whRing3.rotation.x = Math.PI / 2.1;
-            this.whRing3.rotation.z = 0.2;
-            this.whiteHoleGroup.add(this.whRing3);
-            const pCount = 300;
+            const pCount = 560;
+            this.whFountainData = [];
             const pPositions = new Float32Array(pCount * 3);
-            this.whParticleAngles = new Float32Array(pCount);
-            this.whParticleRadii = new Float32Array(pCount);
-            this.whParticleSpeeds = new Float32Array(pCount);
-            this.whParticleHeights = new Float32Array(pCount);
             for (let i = 0; i < pCount; i++) {
-                this.whParticleAngles[i] = Math.random() * Math.PI * 2;
-                this.whParticleRadii[i] = 2.4 + Math.random() * 5.0;
-                this.whParticleSpeeds[i] = 0.02 + Math.random() * 0.04;
-                this.whParticleHeights[i] = (Math.random() - 0.5) * 2.2;
-                pPositions[i * 3 + 0] = Math.cos(this.whParticleAngles[i]) * this.whParticleRadii[i];
-                pPositions[i * 3 + 1] = this.whParticleHeights[i];
-                pPositions[i * 3 + 2] = Math.sin(this.whParticleAngles[i]) * this.whParticleRadii[i];
+                const progress = Math.random();
+                const angle = Math.random() * Math.PI * 2;
+                const rSpread = 0.35 + Math.random() * 5.4;
+                const speed = 0.012 + Math.random() * 0.016;
+                const spin = 0.03 + Math.random() * 0.04;
+                this.whFountainData.push({ progress, angle, rSpread, speed, spin });
+                const x = -5.0 + progress * 16.0;
+                const coneEnvelope = 0.16 + progress * 0.84;
+                const r = rSpread * coneEnvelope;
+                pPositions[i * 3 + 0] = x;
+                pPositions[i * 3 + 1] = Math.cos(angle) * r;
+                pPositions[i * 3 + 2] = Math.sin(angle) * r;
             }
             const pGeo = new THREE.BufferGeometry();
             pGeo.setAttribute("position", new THREE.BufferAttribute(pPositions, 3));
             const pMat = new THREE.PointsMaterial({
                 color: 0x2dd4bf,
-                size: 0.32,
+                map: pTex,
+                size: 0.42,
                 transparent: true,
-                opacity: 0.75,
+                opacity: 0.88,
+                depthWrite: false,
                 blending: THREE.AdditiveBlending
             });
-            this.whOutflowParticles = new THREE.Points(pGeo, pMat);
-            this.whiteHoleGroup.add(this.whOutflowParticles);
+            this.whFountainParticles = new THREE.Points(pGeo, pMat);
+            this.whiteHoleGroup.add(this.whFountainParticles);
             this.scene.add(this.whiteHoleGroup);
         }
-        buildOrbitalTracks() {
+        buildArenaPlanes() {
             this.ringGroups = [];
+            this.rings = [
+                { id: "ring_terms", x: -8.5, radius: 4.8, rotY: -0.62, rotX: 0.11, speed: 0.0028, type: "TERM", color: 0x38bdf8, label: "Domain Terms" },
+                { id: "ring_concepts", x: 0.0, radius: 5.2, rotY: -0.62, rotX: 0.11, speed: -0.0022, type: "CONCEPT", color: 0x60a5fa, label: "Concepts & Entities" },
+                { id: "ring_claims", x: 8.5, radius: 4.8, rotY: -0.62, rotX: 0.11, speed: 0.0025, type: "CLAIM", color: 0xa78bfa, label: "Grounded Claims" }
+            ];
             this.rings.forEach(ringCfg => {
                 const group = new THREE.Group();
                 group.position.set(ringCfg.x, 0, 0);
-                group.rotation.z = ringCfg.tilt;
-                let tColor = 0x60a5fa;
-                if (ringCfg.x === -7.5) tColor = 0x38bdf8;
-                if (ringCfg.x === 7.5) tColor = 0xa78bfa;
-                const trackGeo = new THREE.TorusGeometry(ringCfg.radius, 0.045, 12, 80);
-                const trackMat = new THREE.MeshBasicMaterial({
-                    color: tColor,
+                group.rotation.y = ringCfg.rotY;
+                group.rotation.x = ringCfg.rotX;
+                const planeW = 13.0;
+                const planeH = 13.8;
+                const planeGeo = new THREE.PlaneGeometry(planeW, planeH, 6, 6);
+                const planeMat = new THREE.MeshBasicMaterial({
+                    color: ringCfg.color,
                     transparent: true,
-                    opacity: 0.24,
+                    opacity: 0.055,
+                    side: THREE.DoubleSide,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                });
+                const planeMesh = new THREE.Mesh(planeGeo, planeMat);
+                group.add(planeMesh);
+                const edgesGeo = new THREE.EdgesGeometry(planeGeo);
+                const edgesMat = new THREE.LineBasicMaterial({
+                    color: ringCfg.color,
+                    transparent: true,
+                    opacity: 0.15,
+                    blending: THREE.AdditiveBlending
+                });
+                const edgesMesh = new THREE.LineSegments(edgesGeo, edgesMat);
+                group.add(edgesMesh);
+                const borderGeo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(planeW, planeH));
+                const borderMat = new THREE.LineBasicMaterial({
+                    color: ringCfg.color,
+                    transparent: true,
+                    opacity: 0.58,
+                    linewidth: 2,
+                    blending: THREE.AdditiveBlending
+                });
+                const borderMesh = new THREE.LineSegments(borderGeo, borderMat);
+                group.add(borderMesh);
+                const trackGeo = new THREE.RingGeometry(ringCfg.radius - 0.03, ringCfg.radius + 0.03, 64);
+                const trackMat = new THREE.MeshBasicMaterial({
+                    color: ringCfg.color,
+                    transparent: true,
+                    opacity: 0.22,
+                    side: THREE.DoubleSide,
+                    depthWrite: false,
                     blending: THREE.AdditiveBlending
                 });
                 const trackMesh = new THREE.Mesh(trackGeo, trackMat);
-                trackMesh.rotation.y = Math.PI / 2;
                 group.add(trackMesh);
                 this.scene.add(group);
                 this.ringGroups.push({
@@ -357,6 +367,34 @@
                     currentAngle: 0
                 });
             });
+        }
+        buildGlobalStream() {
+            const pTex = getParticleTexture();
+            const pCount = 420;
+            this.globalStreamData = [];
+            const pPositions = new Float32Array(pCount * 3);
+            for (let i = 0; i < pCount; i++) {
+                const x = -22 + Math.random() * 44;
+                const y = (Math.random() - 0.5) * 7.5;
+                const z = (Math.random() - 0.5) * 7.5;
+                this.globalStreamData.push({ x, y, z, speed: 0.12 + Math.random() * 0.14 });
+                pPositions[i * 3 + 0] = x;
+                pPositions[i * 3 + 1] = y;
+                pPositions[i * 3 + 2] = z;
+            }
+            const pGeo = new THREE.BufferGeometry();
+            pGeo.setAttribute("position", new THREE.BufferAttribute(pPositions, 3));
+            const pMat = new THREE.PointsMaterial({
+                color: 0x7dd3fc,
+                map: pTex,
+                size: 0.34,
+                transparent: true,
+                opacity: 0.65,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+            this.globalStreamParticles = new THREE.Points(pGeo, pMat);
+            this.scene.add(this.globalStreamParticles);
         }
         initLabelsOverlay() {
             this.labelsOverlay = document.createElement("div");
@@ -522,10 +560,10 @@
         }
         createNodeGeometry(nodeType) {
             const t = (nodeType || "").toUpperCase();
-            if (t === "TERM") return new THREE.OctahedronGeometry(1.05, 0);
-            if (t === "ENTITY") return new THREE.BoxGeometry(1.25, 1.25, 1.25);
-            if (t === "CLAIM") return new THREE.TorusGeometry(0.85, 0.32, 16, 28);
-            return new THREE.SphereGeometry(1.05, 24, 24);
+            if (t === "TERM") return new THREE.OctahedronGeometry(0.54, 0);
+            if (t === "ENTITY") return new THREE.BoxGeometry(0.62, 0.62, 0.62);
+            if (t === "CLAIM") return new THREE.SphereGeometry(0.48, 24, 24);
+            return new THREE.SphereGeometry(0.52, 24, 24);
         }
         resolveRingIndex(nodeType) {
             const t = (nodeType || "").toUpperCase();
@@ -844,17 +882,18 @@
         }
         updateNodePositions() {
             this.nodes.forEach(nodeRecord => {
-                const ringCfg = this.rings[nodeRecord.ringIdx];
+                const ringInfo = this.ringGroups[nodeRecord.ringIdx];
+                const ringCfg = ringInfo.cfg;
                 const angle = nodeRecord.angle;
-                const yRaw = Math.sin(angle) * ringCfg.radius;
-                const zRaw = Math.cos(angle) * ringCfg.radius;
-                const cosTilt = Math.cos(ringCfg.tilt);
-                const sinTilt = Math.sin(ringCfg.tilt);
-                const x = ringCfg.x - yRaw * sinTilt;
-                const y = yRaw * cosTilt;
-                const z = zRaw;
-                nodeRecord.mesh.position.set(x, y, z);
-                nodeRecord.hitMesh.position.set(x, y, z);
+                const localX = Math.cos(angle) * ringCfg.radius;
+                const localY = Math.sin(angle) * ringCfg.radius;
+                const pos = new THREE.Vector3(localX, localY, 0);
+                pos.applyEuler(ringInfo.group.rotation);
+                pos.x += ringInfo.group.position.x;
+                pos.y += ringInfo.group.position.y;
+                pos.z += ringInfo.group.position.z;
+                nodeRecord.mesh.position.copy(pos);
+                nodeRecord.hitMesh.position.copy(pos);
             });
         }
         updateOrbitalPhysics(delta) {
@@ -862,10 +901,10 @@
             const ringNodes = [[], [], []];
             this.nodes.forEach(n => ringNodes[n.ringIdx].push(n));
             ringNodes.forEach((nodesInRing, ringIdx) => {
-                const ringCfg = this.rings[ringIdx];
+                const ringInfo = this.ringGroups[ringIdx];
                 const count = nodesInRing.length;
                 if (count <= 1) {
-                    nodesInRing.forEach(n => { n.angle += ringCfg.speed * (delta * 60); });
+                    nodesInRing.forEach(n => { n.angle += ringInfo.cfg.speed * (delta * 60); });
                     return;
                 }
                 nodesInRing.forEach(n => { n.angle = (n.angle % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2); });
@@ -883,7 +922,7 @@
                 }
                 nodesInRing.forEach(n => {
                     n.angularVelocity *= 0.92;
-                    const effectiveSpeed = ringCfg.speed + n.angularVelocity;
+                    const effectiveSpeed = ringInfo.cfg.speed + n.angularVelocity;
                     n.angle += effectiveSpeed * (delta * 60);
                 });
             });
@@ -1151,43 +1190,54 @@
                 }
                 this.ambientDust.geometry.attributes.position.needsUpdate = true;
             }
-            if (this.blackHoleGroup) {
-                if (this.bhDisk1) this.bhDisk1.rotation.z += 0.012;
-                if (this.bhDisk2) this.bhDisk2.rotation.z -= 0.008;
-                if (this.bhInflowParticles) {
-                    const pos = this.bhInflowParticles.geometry.attributes.position.array;
-                    const pCount = this.bhParticleRadii.length;
-                    for (let i = 0; i < pCount; i++) {
-                        this.bhParticleAngles[i] += this.bhParticleSpeeds[i] * spdMult;
-                        this.bhParticleRadii[i] -= 0.015 * spdMult;
-                        if (this.bhParticleRadii[i] < 2.5) {
-                            this.bhParticleRadii[i] = 7.8 + Math.random() * 1.5;
-                        }
-                        pos[i * 3 + 0] = Math.cos(this.bhParticleAngles[i]) * this.bhParticleRadii[i];
-                        pos[i * 3 + 1] = this.bhParticleHeights[i];
-                        pos[i * 3 + 2] = Math.sin(this.bhParticleAngles[i]) * this.bhParticleRadii[i];
+            if (this.blackHoleGroup && this.bhVortexParticles) {
+                const pos = this.bhVortexParticles.geometry.attributes.position.array;
+                for (let i = 0; i < this.bhVortexData.length; i++) {
+                    const pd = this.bhVortexData[i];
+                    pd.angle += pd.speedA * spdMult;
+                    pd.r -= pd.speedR * spdMult;
+                    pd.x += 0.02 * spdMult;
+                    if (pd.r < 0.1) {
+                        pd.r = 6.0 + Math.random() * 2.0;
+                        pd.x = (Math.random() - 0.5) * 5.0;
                     }
-                    this.bhInflowParticles.geometry.attributes.position.needsUpdate = true;
+                    pos[i * 3 + 0] = pd.x;
+                    pos[i * 3 + 1] = Math.cos(pd.angle) * pd.r;
+                    pos[i * 3 + 2] = Math.sin(pd.angle) * pd.r;
                 }
+                this.bhVortexParticles.geometry.attributes.position.needsUpdate = true;
             }
-            if (this.whiteHoleGroup) {
-                if (this.whRing1) this.whRing1.rotation.z += 0.010;
-                if (this.whRing2) this.whRing2.rotation.z -= 0.007;
-                if (this.whOutflowParticles) {
-                    const pos = this.whOutflowParticles.geometry.attributes.position.array;
-                    const pCount = this.whParticleRadii.length;
-                    for (let i = 0; i < pCount; i++) {
-                        this.whParticleAngles[i] += this.whParticleSpeeds[i] * spdMult;
-                        this.whParticleRadii[i] += 0.018 * spdMult;
-                        if (this.whParticleRadii[i] > 7.8) {
-                            this.whParticleRadii[i] = 2.4 + Math.random() * 0.5;
-                        }
-                        pos[i * 3 + 0] = Math.cos(this.whParticleAngles[i]) * this.whParticleRadii[i];
-                        pos[i * 3 + 1] = this.whParticleHeights[i];
-                        pos[i * 3 + 2] = Math.sin(this.whParticleAngles[i]) * this.whParticleRadii[i];
+            if (this.whiteHoleGroup && this.whFountainParticles) {
+                const pos = this.whFountainParticles.geometry.attributes.position.array;
+                for (let i = 0; i < this.whFountainData.length; i++) {
+                    const fd = this.whFountainData[i];
+                    fd.x += fd.speedX * spdMult;
+                    fd.angle += 0.03 * spdMult;
+                    if (fd.x > 12) {
+                        fd.x = 0;
+                        fd.angle = Math.random() * Math.PI * 2;
                     }
-                    this.whOutflowParticles.geometry.attributes.position.needsUpdate = true;
+                    const r = (fd.x / 12) * 8.0 + fd.rBase;
+                    pos[i * 3 + 0] = fd.x;
+                    pos[i * 3 + 1] = Math.cos(fd.angle) * r;
+                    pos[i * 3 + 2] = Math.sin(fd.angle) * r;
                 }
+                this.whFountainParticles.geometry.attributes.position.needsUpdate = true;
+            }
+            if (this.globalStreamParticles) {
+                const pos = this.globalStreamParticles.geometry.attributes.position.array;
+                for (let i = 0; i < this.globalStreamData.length; i++) {
+                    const gd = this.globalStreamData[i];
+                    gd.x += gd.speed * spdMult;
+                    if (gd.x > 22) {
+                        gd.x = -22;
+                    }
+                    const flowPinch = Math.max(0.1, 1.0 - Math.pow(Math.abs(gd.x) / 22, 2));
+                    pos[i * 3 + 0] = gd.x;
+                    pos[i * 3 + 1] = gd.y * flowPinch;
+                    pos[i * 3 + 2] = gd.z * flowPinch;
+                }
+                this.globalStreamParticles.geometry.attributes.position.needsUpdate = true;
             }
             this.updateOrbitalPhysics(delta);
             const pulseScale = 1.0 + 0.08 * Math.sin(elapsed * 4.5);

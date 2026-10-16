@@ -80,7 +80,7 @@
         }
         #overlay-card {
             position: absolute;
-            bottom: 112px;
+            bottom: 84px;
             left: 50%;
             transform: translateX(-50%);
             width: min(650px, 56vw);
@@ -105,12 +105,55 @@
         }
         #prompt-dock {
             position: absolute;
-            bottom: 12px;
+            bottom: 18px;
             left: 50%;
             transform: translateX(-50%);
             width: min(670px, 88vw);
             min-width: 340px;
             z-index: 30;
+        }
+        .stage-step-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(15, 23, 42, 0.55);
+            color: #64748B;
+            transition: all 0.2s ease;
+        }
+        .stage-step-pill .step-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 9999px;
+            background-color: #475569;
+            transition: all 0.2s ease;
+        }
+        .stage-step-pill.step-active {
+            background: rgba(14, 116, 144, 0.34);
+            border-color: #38BDF8;
+            color: #F8FAFC;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.28);
+        }
+        .stage-step-pill.step-active .step-dot {
+            background-color: #38BDF8;
+            box-shadow: 0 0 6px #38BDF8;
+        }
+        .stage-step-pill.step-completed {
+            background: rgba(19, 78, 74, 0.32);
+            border-color: rgba(45, 212, 191, 0.55);
+            color: #2DD4BF;
+        }
+        .stage-step-pill.step-completed .step-dot {
+            background-color: #2DD4BF;
+        }
+        .stage-step-arrow {
+            color: rgba(148, 163, 184, 0.28);
+            font-size: 10px;
+            user-select: none;
         }
         @supports (scrollbar-color: auto) {
             .scrollbar-dark, #overlay-card-body {
@@ -146,19 +189,19 @@
         }
         @media (max-width: 900px) {
             #overlay-card {
-            position: absolute;
-            bottom: 112px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: min(650px, 56vw);
-            min-width: 340px;
-            max-height: 40vh;
-            z-index: 25;
-            border-radius: 16px;
-            display: flex;
-            flex-direction: column;
-            transition: max-height 0.22s ease, opacity 0.18s ease;
-        }
+                position: absolute;
+                bottom: 84px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: min(650px, 88vw);
+                min-width: 340px;
+                max-height: 40vh;
+                z-index: 25;
+                border-radius: 16px;
+                display: flex;
+                flex-direction: column;
+                transition: max-height 0.22s ease, opacity 0.18s ease;
+            }
             #prompt-dock {
                 width: 94vw;
             }
@@ -175,74 +218,44 @@
             </div>
             <div class="flex items-baseline space-x-2">
                 <h1 class="font-bold text-sm tracking-tight" style="color: #F8FAFC;">Project IDEA</h1>
-                <span class="hidden sm:inline text-xs" style="color: #94A3B8;">Semantic Knowledge Library</span>
             </div>
         </div>
 
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-3">
+            <div id="pipeline-stage-stepper" class="hidden sm:flex items-center space-x-1.5" aria-label="Processing Pipeline Stages">
+                <div id="step-pill-ingest" data-step="ingest" class="stage-step-pill">
+                    <span class="step-dot"></span>
+                    <span>Ingest</span>
+                </div>
+                <span class="stage-step-arrow">→</span>
+                <div id="step-pill-align" data-step="align" class="stage-step-pill">
+                    <span class="step-dot"></span>
+                    <span>Align</span>
+                </div>
+                <span class="stage-step-arrow">→</span>
+                <div id="step-pill-verify" data-step="verify" class="stage-step-pill">
+                    <span class="step-dot"></span>
+                    <span>Verify</span>
+                </div>
+                <span class="stage-step-arrow">→</span>
+                <div id="step-pill-wiki" data-step="wiki" class="stage-step-pill">
+                    <span class="step-dot"></span>
+                    <span>Wiki</span>
+                </div>
+                <span class="stage-step-arrow">|</span>
+                <div id="step-pill-query" data-step="query" class="stage-step-pill">
+                    <span class="step-dot"></span>
+                    <span>Query</span>
+                </div>
+            </div>
+
             <div id="execution-stage-badge" class="flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-semibold transition-all" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #F8FAFC;" title="Current Pipeline Execution Stage">
                 <span id="execution-stage-dot" class="w-2 h-2 rounded-full" style="background-color: #38BDF8;"></span>
                 <span id="execution-stage-text">Idle / Explore</span>
                 <span id="execution-stage-sub" class="hidden lg:inline text-[11px] font-normal pl-1 border-l" style="color: #94A3B8; border-color: rgba(148, 163, 184, 0.18);">Orbits active</span>
             </div>
         </div>
-
-        <div class="flex items-center space-x-2">
-            <div id="session-stats-pill" class="hidden md:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-medium" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #94A3B8;">
-                <span id="stat-terms-count" style="color: #F8FAFC; font-weight: 600;">3</span><span>Terms</span>
-                <span>·</span>
-                <span id="stat-concepts-count" style="color: #F8FAFC; font-weight: 600;">5</span><span>Concepts</span>
-                <span>·</span>
-                <span id="stat-claims-count" style="color: #F8FAFC; font-weight: 600;">2</span><span>Claims</span>
-            </div>
-
-            <button id="btn-open-pending-diff" onclick="openPendingDiffCard()" class="hidden px-2.5 py-1 rounded-lg text-xs font-semibold border transition flex items-center space-x-1.5" style="background: rgba(120, 53, 15, 0.32); border-color: #F59E0B; color: #F59E0B;">
-                <i class="fa-solid fa-code-compare text-[11px]"></i>
-                <span id="pending-diff-btn-label">Review Diff (1)</span>
-            </button>
-
-            <button id="btn-reset-view" onclick="resetViewCamera()" class="px-2.5 py-1 rounded-lg text-xs font-medium border hover:bg-slate-100 transition flex items-center space-x-1" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #F8FAFC;" title="Reset 3D camera to default left-to-right view">
-                <i class="fa-solid fa-compress text-[11px]" style="color: #38BDF8;"></i>
-                <span>Reset view</span>
-            </button>
-
-            <button id="btn-reset-session" onclick="resetState()" class="px-2.5 py-1 rounded-lg text-xs font-medium border hover:bg-red-50 transition flex items-center space-x-1" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #94A3B8;" title="Reset session library to initial seed knowledge">
-                <i class="fa-solid fa-rotate-left text-[11px]"></i>
-                <span class="hidden sm:inline">Reset session</span>
-            </button>
-
-            <div class="hidden xl:flex items-center space-x-1.5 pl-1">
-                <span id="tier-status-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span id="api-target-label" class="font-mono-code text-[10px]" style="color: #94A3B8;">gemini-4-argon</span>
-            </div>
-        </div>
     </header>
-
-    <div class="pointer-events-none absolute top-14 left-4 right-4 flex items-start justify-between z-10">
-        <div id="zone-pill-left" class="idea-zone-pill px-3 py-1 rounded-full text-[11px] font-semibold flex items-center space-x-1.5 pointer-events-auto cursor-pointer" onclick="inspectNodeById('portal_black_hole')">
-            <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: #18212C; box-shadow: 0 0 0 2px rgba(66,133,244,0.35);"></span>
-            <span>BLACK HOLE · SOURCE</span>
-            <span id="active-source-indicator" class="hidden font-mono-code text-[10px] px-1.5 py-0.5 rounded" style="background: rgba(14, 116, 144, 0.28); color: #38BDF8;"></span>
-        </div>
-
-        <div id="zone-pill-center" class="idea-zone-pill hidden md:flex px-3 py-1 rounded-full text-[11px] font-semibold items-center space-x-2 pointer-events-auto">
-            <button class="lens-filter-btn hover:text-white transition" onclick="setConstellationLens('all')">All</button>
-            <span style="color: rgba(148, 163, 184, 0.18);">|</span>
-            <button class="lens-filter-btn hover:text-white transition" style="color: #f43f5e;" onclick="setConstellationLens('term')">◆ Terms</button>
-            <span style="color: rgba(148, 163, 184, 0.18);">→</span>
-            <button class="lens-filter-btn hover:text-white transition" style="color: #38bdf8;" onclick="setConstellationLens('concept')">● Concepts</button>
-            <span style="color: rgba(148, 163, 184, 0.18);">→</span>
-            <button class="lens-filter-btn hover:text-white transition" style="color: #2dd4bf;" onclick="setConstellationLens('claim')">◎ Claims</button>
-            <span style="color: rgba(148, 163, 184, 0.18);">|</span>
-            <button class="lens-filter-btn hover:text-white transition" style="color: #f59e0b;" onclick="setConstellationLens('proposed')">◌ Pending</button>
-        </div>
-
-        <div id="zone-pill-right" class="idea-zone-pill px-3 py-1 rounded-full text-[11px] font-semibold flex items-center space-x-1.5 pointer-events-auto cursor-pointer" onclick="inspectNodeById('portal_white_hole')">
-            <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: #2DD4BF; box-shadow: 0 0 0 2px rgba(52,168,83,0.3);"></span>
-            <span>WHITE HOLE · WIKI</span>
-            <span id="wiki-session-counter" class="font-mono-code text-[10px] px-1.5 py-0.5 rounded" style="background: rgba(19, 78, 74, 0.36); color: #2DD4BF;">Seed</span>
-        </div>
-    </div>
 
     <section id="overlay-card" class="idea-surface-card hidden select-text" aria-live="polite">
         <div id="overlay-card-header" class="h-11 px-4 border-b flex items-center justify-between shrink-0" style="border-color: rgba(148, 163, 184, 0.18);">
@@ -268,11 +281,11 @@
             </div>
 
             <div class="flex items-center space-x-1 shrink-0">
-                <button id="btn-collapse-overlay" onclick="toggleCollapseOverlay()" class="px-2 py-1 rounded-md text-xs font-medium hover:bg-slate-100 transition flex items-center space-x-1" style="color: #94A3B8;" title="Collapse or expand card to inspect 3D orbits">
+                <button id="btn-collapse-overlay" onclick="toggleCollapseOverlay()" class="px-2 py-1 rounded-md text-xs font-medium hover:bg-slate-800 transition flex items-center space-x-1" style="color: #94A3B8;" title="Collapse or expand card to inspect 3D orbits">
                     <i id="collapse-overlay-icon" class="fa-solid fa-chevron-down text-[11px]"></i>
                     <span id="collapse-overlay-label" class="text-[11px]">Minimize</span>
                 </button>
-                <button id="btn-close-overlay" onclick="closeOverlayCard()" class="w-7 h-7 rounded-md hover:bg-slate-100 transition flex items-center justify-center" style="color: #94A3B8;" title="Close card (Esc)">
+                <button id="btn-close-overlay" onclick="closeOverlayCard()" class="w-7 h-7 rounded-md hover:bg-slate-800 transition flex items-center justify-center" style="color: #94A3B8;" title="Close card (Esc)">
                     <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
             </div>
@@ -285,7 +298,7 @@
                         <i class="fa-solid fa-triangle-exclamation"></i>
                         <span id="error-banner-title">Source or Execution Issue</span>
                     </span>
-                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-white/80 border" style="border-color: #F43F5E;">Existing Library Preserved</span>
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded border" style="background: rgba(15, 23, 42, 0.85); border-color: #F43F5E; color: #F43F5E;">Existing Library Preserved</span>
                 </div>
                 <p id="error-banner-msg" class="text-xs leading-relaxed" style="color: #F8FAFC;"></p>
             </div>
@@ -335,14 +348,14 @@
             </div>
         </div>
 
-        <div id="overlay-card-footer" class="px-4 py-2.5 border-t flex items-center justify-between shrink-0" style="border-color: rgba(148, 163, 184, 0.18); background: rgba(248, 250, 253, 0.9);">
+        <div id="overlay-card-footer" class="px-4 py-2.5 border-t flex items-center justify-between shrink-0" style="border-color: rgba(148, 163, 184, 0.18); background: rgba(10, 15, 30, 0.88);">
             <div id="node-card-actions" class="hidden w-full flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                     <button id="btn-trace-source" onclick="triggerTraceToSource()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition flex items-center space-x-1.5 shadow-sm" style="background-color: #38BDF8;">
                         <i class="fa-solid fa-route text-[11px]"></i>
                         <span>Trace to source</span>
                     </button>
-                    <button id="btn-clear-trace" onclick="clearSceneTrace()" class="px-2.5 py-1.5 rounded-lg text-xs font-medium border hover:bg-slate-100 transition" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #94A3B8;">
+                    <button id="btn-clear-trace" onclick="clearSceneTrace()" class="px-2.5 py-1.5 rounded-lg text-xs font-medium border hover:bg-slate-800 transition" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #94A3B8;">
                         <span>Clear trace</span>
                     </button>
                 </div>
@@ -354,7 +367,7 @@
                     Select verified items to add to session library
                 </div>
                 <div class="flex items-center space-x-2">
-                    <button id="btn-reject-diff" onclick="rejectCurrentChangeSet()" class="px-3 py-1.5 rounded-lg text-xs font-semibold border hover:bg-red-50 transition flex items-center space-x-1" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #F43F5E;">
+                    <button id="btn-reject-diff" onclick="rejectCurrentChangeSet()" class="px-3 py-1.5 rounded-lg text-xs font-semibold border hover:bg-slate-800 transition flex items-center space-x-1" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #F43F5E;">
                         <i class="fa-solid fa-xmark"></i>
                         <span>Reject</span>
                     </button>
@@ -373,54 +386,6 @@
     </section>
 
     <div id="prompt-dock" class="select-text">
-        <div id="raw-source-drawer" class="hidden idea-surface-card mb-2 p-3 rounded-2xl space-y-2">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold flex items-center space-x-1.5" style="color: #F8FAFC;">
-                    <i class="fa-solid fa-file-lines" style="color: #38BDF8;"></i>
-                    <span>Direct Source Text / Excerpt Input (Optional)</span>
-                </span>
-                <div class="flex items-center space-x-2">
-                    <button type="button" onclick="loadSampleText()" class="px-2 py-0.5 rounded border text-[11px] font-medium hover:bg-blue-50 transition" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #38BDF8;">
-                        Load Sample Excerpt
-                    </button>
-                    <button type="button" onclick="toggleRawSourceDrawer(false)" class="text-xs px-1.5 py-0.5 rounded hover:bg-slate-100" style="color: #94A3B8;">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div>
-                    <label class="text-[11px] font-medium block mb-1" style="color: #94A3B8;">Source Title</label>
-                    <input id="input-title" type="text" placeholder="e.g. vLLM PagedAttention Note" class="w-full px-2.5 py-1.5 rounded-lg border text-xs focus:outline-none" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #F8FAFC;" value="">
-                </div>
-                <div class="sm:col-span-2">
-                    <label class="text-[11px] font-medium block mb-1" style="color: #94A3B8;">Verbatim Source Excerpt</label>
-                    <textarea id="input-text" rows="2" placeholder="Paste raw paragraph or abstract here to assimilate with your prompt question..." class="w-full px-2.5 py-1.5 rounded-lg border text-xs focus:outline-none resize-none" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #F8FAFC;"></textarea>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex items-center justify-between gap-1.5 mb-1.5 px-1 flex-wrap">
-            <div class="flex items-center gap-1.5 flex-wrap">
-                <button id="preset-query-seed" type="button" onclick="applyPromptPreset('seed_query')" class="idea-zone-pill px-2.5 py-1 rounded-full text-[11px] font-medium hover:border-blue-400 transition flex items-center space-x-1">
-                    <i class="fa-solid fa-magnifying-glass text-[10px]" style="color: #38BDF8;"></i>
-                    <span>Ask: KV Cache &amp; PagedAttention</span>
-                </button>
-                <button id="preset-ingest-arxiv" type="button" onclick="applyPromptPreset('arxiv_ingest')" class="idea-zone-pill px-2.5 py-1 rounded-full text-[11px] font-medium hover:border-blue-400 transition flex items-center space-x-1">
-                    <i class="fa-solid fa-link text-[10px]" style="color: #2DD4BF;"></i>
-                    <span>Ingest URL: vLLM Paper (arXiv)</span>
-                </button>
-                <button id="preset-query-followup" type="button" onclick="applyPromptPreset('followup_query')" class="idea-zone-pill px-2.5 py-1 rounded-full text-[11px] font-medium hover:border-blue-400 transition flex items-center space-x-1">
-                    <i class="fa-solid fa-rotate text-[10px]" style="color: #F59E0B;"></i>
-                    <span>Ask Follow-up (Session)</span>
-                </button>
-            </div>
-            <button id="btn-toggle-raw-drawer" type="button" onclick="toggleRawSourceDrawer()" class="idea-zone-pill px-2.5 py-1 rounded-full text-[11px] font-medium hover:border-blue-400 transition flex items-center space-x-1" style="color: #94A3B8;">
-                <i class="fa-solid fa-paste text-[10px]"></i>
-                <span>Paste Text</span>
-            </button>
-        </div>
-
         <form id="prompt-form" onsubmit="handlePromptSubmit(event)" class="idea-surface-card rounded-2xl p-1.5 flex items-center space-x-2">
             <div id="prompt-mode-pill" class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wide flex items-center space-x-1.5 shrink-0 transition-colors" style="background: rgba(14, 116, 144, 0.28); color: #38BDF8;">
                 <i id="prompt-mode-icon" class="fa-solid fa-magnifying-glass text-[10px]"></i>
@@ -447,11 +412,6 @@
                 <i id="prompt-submit-icon" class="fa-solid fa-arrow-right text-[11px]"></i>
             </button>
         </form>
-
-        <div class="mt-1 px-2 flex items-center justify-between text-[11px]" style="color: #94A3B8;">
-            <span>Session only — refreshing may reset this library.</span>
-            <span class="hidden sm:inline">Drag to orbit · Scroll to zoom · Click any node to inspect evidence</span>
-        </div>
     </div>
 
     <script src="/static/scene_physics.js"></script>

@@ -54,8 +54,51 @@ function clearStageTimers() {
     }
 }
 
+const STAGE_STEP_MAP = {
+    "Idle / Explore": { active: [], completed: [] },
+    "Query": { active: ["query"], completed: [] },
+    "Ingest": { active: ["ingest"], completed: [] },
+    "Align": { active: ["align"], completed: ["ingest"] },
+    "Verify / Repair": { active: ["verify"], completed: ["ingest", "align"] },
+    "Review": { active: ["wiki"], completed: ["ingest", "align", "verify"] },
+    "Apply": { active: ["wiki"], completed: ["ingest", "align", "verify"] },
+    "Complete": { active: [], completed: ["ingest", "align", "verify", "wiki"] },
+    "Unresolved / Error": { active: [], completed: ["ingest"] }
+};
+
+function updatePipelineStageStepper(canonicalStage) {
+    const stepper = document.getElementById("pipeline-stage-stepper");
+    if (!stepper) return;
+
+    const mapCfg = STAGE_STEP_MAP[canonicalStage] || STAGE_STEP_MAP["Idle / Explore"];
+    const stepKeys = ["ingest", "align", "verify", "wiki", "query"];
+
+    stepKeys.forEach(key => {
+        const pill = document.getElementById(`step-pill-${key}`);
+        if (!pill) return;
+        pill.classList.remove("step-active", "step-completed");
+        if (mapCfg.active.includes(key)) {
+            pill.classList.add("step-active");
+        } else if (mapCfg.completed.includes(key)) {
+            pill.classList.add("step-completed");
+        }
+    });
+}
+
 function setExecutionStage(stageName, customSubtitle) {
-    const canonical = CANONICAL_STAGES[stageName] ? stageName : "Idle / Explore";
+    const normalizeMap = {
+        ingest: "Ingest",
+        align: "Align",
+        verify: "Verify / Repair",
+        review: "Review",
+        apply: "Apply",
+        complete: "Complete",
+        query: "Query",
+        idle: "Idle / Explore",
+        error: "Unresolved / Error"
+    };
+    const mapped = normalizeMap[String(stageName || "").toLowerCase()] || stageName;
+    const canonical = CANONICAL_STAGES[mapped] ? mapped : "Idle / Explore";
     const cfg = CANONICAL_STAGES[canonical];
 
     const badge = document.getElementById("execution-stage-badge");
@@ -82,8 +125,16 @@ function setExecutionStage(stageName, customSubtitle) {
         subEl.textContent = customSubtitle || cfg.sub;
     }
 
+    updatePipelineStageStepper(canonical);
+
     if (sceneManager && typeof sceneManager.setExecutionStage === "function") {
         sceneManager.setExecutionStage(canonical);
+    }
+}
+
+function syncSceneFromState() {
+    if (sceneManager && typeof sceneManager.syncGraph === "function") {
+        sceneManager.syncGraph(currentState, activeChangeSet);
     }
 }
 
@@ -511,7 +562,7 @@ function showNodeModal(data) {
                     <div class="p-2.5 rounded-xl border space-y-1.5" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18);">
                         <span class="text-[11px] font-semibold block" style="color:#2DD4BF;">Synthesized Living Wiki Statements (${verifiedClaims.length})</span>
                         ${verifiedClaims.map(cl => `
-                            <div class="p-2 rounded-lg bg-white border flex items-start justify-between gap-2" style="border-color:rgba(148, 163, 184, 0.18);">
+                            <div class="p-2 rounded-lg border flex items-start justify-between gap-2" style="background:rgba(10, 15, 30, 0.85); border-color:rgba(148, 163, 184, 0.18);">
                                 <span class="text-xs">${escapeHtml(cl.statement)}</span>
                                 <button type="button" onclick="inspectNodeById('${escapeHtml(cl.id)}')" class="shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold border" style="background:rgba(14, 116, 144, 0.28); color:#38BDF8; border-color:#38BDF8;">Inspect</button>
                             </div>
@@ -599,7 +650,7 @@ function showNodeModal(data) {
                 const validUrl = safeHttpUrl(effectiveEvidence.resolved_url || effectiveEvidence.url);
                 const srcTitle = effectiveEvidence.title || effectiveEvidence.url || "Tracked Source";
                 const linkHtml = validUrl
-                    ? `<a href="${escapeHtml(validUrl)}" target="_blank" rel="noopener noreferrer" class="font-semibold underline hover:text-blue-700" style="color:#38BDF8;"><i class="fa-solid fa-arrow-up-right-from-square text-[10px] mr-1"></i>${escapeHtml(srcTitle)}</a>`
+                    ? `<a href="${escapeHtml(validUrl)}" target="_blank" rel="noopener noreferrer" class="font-semibold underline hover:text-blue-400" style="color:#38BDF8;"><i class="fa-solid fa-arrow-up-right-from-square text-[10px] mr-1"></i>${escapeHtml(srcTitle)}</a>`
                     : `<span class="font-medium">${escapeHtml(srcTitle)}</span>`;
                 const mechBadge = effectiveEvidence.mechanical_verified
                     ? `<span class="font-mono-code text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(19, 78, 74, 0.36); color:#2DD4BF;">Quote matched</span>`
@@ -937,7 +988,7 @@ function renderQueryAnswer(data) {
                             ? `<p class="text-[11px] italic truncate mt-1" style="color:#94A3B8;">"${escapeHtml(c.exact_quote)}"</p>`
                             : "";
                         return `
-                            <button type="button" onclick="inspectNodeById('${escapeHtml(c.node_id)}')" class="text-left p-2.5 rounded-xl border hover:border-blue-500 transition bg-white space-y-1" style="border-color:rgba(148, 163, 184, 0.18);">
+                            <button type="button" onclick="inspectNodeById('${escapeHtml(c.node_id)}')" class="text-left p-2.5 rounded-xl border hover:border-blue-500 transition space-y-1" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18);">
                                 <div class="flex items-center justify-between gap-1">
                                     <span class="font-semibold text-xs truncate" style="color:#38BDF8;">${escapeHtml(c.label || c.node_id)}</span>
                                     ${provBadge}
@@ -979,13 +1030,13 @@ async function runSourceAssimilation({ url, text, title, question }) {
         if (isSubmittingPrompt) {
             setExecutionStage("Align", "Mapping terms & canonical concepts");
         }
-    }, 650));
+    }, 550));
 
     stageTimers.push(setTimeout(() => {
         if (isSubmittingPrompt) {
             setExecutionStage("Verify / Repair", "Checking verbatim quotes & conflicts");
         }
-    }, 1400));
+    }, 1150));
 
     try {
         const payload = { question };
@@ -1011,6 +1062,22 @@ async function runSourceAssimilation({ url, text, title, question }) {
 
         await fetchState();
         renderChangeSet(activeChangeSet, activePipelineTrace);
+
+        if (activeChangeSet && (activeChangeSet.answer || activeChangeSet.question)) {
+            const citationsFromCs = (activeChangeSet.proposed_claims || []).map(cl => ({
+                node_id: cl.id,
+                label: cl.statement,
+                exact_quote: cl.evidence ? cl.evidence.exact_quote : "",
+                is_seed: false
+            }));
+            renderQueryAnswer({
+                question: activeChangeSet.question || question,
+                answer: activeChangeSet.answer || "Source assimilated. Review the verified concepts and claims in Knowledge Diff.",
+                citations: citationsFromCs
+            });
+        }
+
+        syncSceneFromState();
         switchOverlayTab("diff");
         setExecutionStage("Review", "Rotation paused · Review & approve changes");
         toggleRawSourceDrawer(false);
@@ -1022,6 +1089,10 @@ async function runSourceAssimilation({ url, text, title, question }) {
         setPromptSubmittingState(false);
         updatePromptModeIndicator();
     }
+}
+
+async function runAssimilateFlow(opts) {
+    return runSourceAssimilation(opts || {});
 }
 
 async function triggerAssimilate() {
@@ -1082,7 +1153,7 @@ function renderPipelineTraceCard(pipelineTrace) {
                 <summary class="cursor-pointer font-semibold select-none" style="color:#38BDF8;">
                     <i class="fa-solid fa-brain mr-1"></i>Argon Reasoning &amp; Verification Trace (${thoughtList.length} step${thoughtList.length > 1 ? "s" : ""})
                 </summary>
-                <ul class="mt-1.5 space-y-1 list-disc list-inside p-2 rounded-lg border bg-white" style="border-color:rgba(148, 163, 184, 0.18); color:#94A3B8;">
+                <ul class="mt-1.5 space-y-1 list-disc list-inside p-2 rounded-lg border" style="background:rgba(10, 15, 30, 0.85); border-color:rgba(148, 163, 184, 0.18); color:#94A3B8;">
                     ${thoughtList.map(t => `<li class="leading-relaxed">${escapeHtml(t)}</li>`).join("")}
                 </ul>
             </details>
@@ -1101,7 +1172,7 @@ function renderPipelineTraceCard(pipelineTrace) {
                 </span>
             </div>
             <div class="flex flex-wrap items-center gap-2 text-[11px]" style="color:#94A3B8;">
-                <span class="font-mono-code px-2 py-0.5 rounded border bg-white" style="border-color:rgba(148, 163, 184, 0.18);">Turn 1: ${escapeHtml(turn1Id)}</span>
+                <span class="font-mono-code px-2 py-0.5 rounded border" style="background:rgba(10, 15, 30, 0.85); border-color:rgba(148, 163, 184, 0.18);">Turn 1: ${escapeHtml(turn1Id)}</span>
                 ${turn2Id ? `<span class="font-mono-code px-2 py-0.5 rounded border" style="background:rgba(120, 53, 15, 0.32); border-color:#F59E0B; color:#F59E0B;">Turn 2 (previous_interaction_id): ${escapeHtml(turn2Id)}</span>` : ""}
             </div>
             ${thoughtsHtml}
@@ -1132,7 +1203,7 @@ function renderChangeSet(cs, pipelineTrace = null) {
         html += `
             <div class="p-3 rounded-xl border space-y-1.5" style="background:rgba(14, 116, 144, 0.28); border-color:#38BDF8;">
                 <div class="flex items-center justify-between flex-wrap gap-1">
-                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-white border" style="color:#38BDF8; border-color:#38BDF8;">
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded border" style="background:rgba(10, 15, 30, 0.85); color:#38BDF8; border-color:#38BDF8;">
                         <i class="fa-solid fa-comment-dots mr-1"></i>Answer from Source
                     </span>
                     <span class="text-[10px] font-semibold" style="color:#38BDF8;">Candidate changes below await your approval</span>
@@ -1144,7 +1215,7 @@ function renderChangeSet(cs, pipelineTrace = null) {
     }
 
     html += `
-        <div class="p-3 rounded-xl border bg-white space-y-1" style="border-color:rgba(148, 163, 184, 0.18);">
+        <div class="p-3 rounded-xl border space-y-1" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18);">
             <div class="flex items-center justify-between flex-wrap gap-1">
                 <div class="flex items-center space-x-2">
                     <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border" style="background:rgba(14, 116, 144, 0.28); color:#38BDF8; border-color:#38BDF8;">Source located</span>
@@ -1182,7 +1253,7 @@ function renderChangeSet(cs, pipelineTrace = null) {
                 : "";
 
             html += `
-                <label class="p-2.5 rounded-xl border bg-white flex items-start space-x-2.5 cursor-pointer hover:border-blue-400 transition" style="border-color:rgba(148, 163, 184, 0.18);">
+                <label class="p-2.5 rounded-xl border flex items-start space-x-2.5 cursor-pointer hover:border-blue-400 transition" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18);">
                     <input type="checkbox" class="diff-concept-cb mt-1 w-3.5 h-3.5 rounded" data-id="${escapeHtml(c.id)}" ${isUnresolved ? "disabled" : "checked"} onchange="updateDiffSelectionSummary()">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center justify-between flex-wrap gap-1">
@@ -1207,7 +1278,7 @@ function renderChangeSet(cs, pipelineTrace = null) {
         `;
         proposedRelations.forEach(r => {
             html += `
-                <label class="p-2.5 rounded-xl border bg-white flex items-start space-x-2.5 cursor-pointer hover:border-blue-400 transition" style="border-color:rgba(148, 163, 184, 0.18);">
+                <label class="p-2.5 rounded-xl border flex items-start space-x-2.5 cursor-pointer hover:border-blue-400 transition" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18);">
                     <input type="checkbox" class="diff-relation-cb mt-1 w-3.5 h-3.5 rounded" data-id="${escapeHtml(r.id)}" checked onchange="updateDiffSelectionSummary()">
                     <div class="flex-1 text-xs">
                         <div class="font-mono-code text-[11px] flex items-center flex-wrap gap-1">
@@ -1233,11 +1304,11 @@ function renderChangeSet(cs, pipelineTrace = null) {
             const quoteText = cl.evidence && cl.evidence.exact_quote ? cl.evidence.exact_quote : "";
             const anchorText = cl.evidence && cl.evidence.section_anchor ? cl.evidence.section_anchor : "Source body";
             html += `
-                <label class="p-3 rounded-xl border bg-white flex items-start space-x-2.5 cursor-pointer hover:border-blue-400 transition" style="border-color:rgba(148, 163, 184, 0.18);">
+                <label class="p-3 rounded-xl border flex items-start space-x-2.5 cursor-pointer hover:border-blue-400 transition" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18);">
                     <input type="checkbox" class="diff-claim-cb mt-1 w-3.5 h-3.5 rounded" data-id="${escapeHtml(cl.id)}" checked onchange="updateDiffSelectionSummary()">
                     <div class="flex-1 space-y-1.5">
                         <div class="flex items-center justify-between flex-wrap gap-1">
-                            <span class="font-mono-code text-[10px] px-1.5 py-0.5 rounded border" style="background:rgba(15, 23, 42, 0.78); color:#94A3B8; border-color:rgba(148, 163, 184, 0.18);">Concept: ${escapeHtml(cl.concept_id)}</span>
+                            <span class="font-mono-code text-[10px] px-1.5 py-0.5 rounded border" style="background:rgba(10, 15, 30, 0.85); color:#94A3B8; border-color:rgba(148, 163, 184, 0.18);">Concept: ${escapeHtml(cl.concept_id)}</span>
                             <div class="flex items-center gap-1 flex-wrap">
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" style="background:rgba(14, 116, 144, 0.28); color:#38BDF8; border-color:#38BDF8;">Source located</span>
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" style="background:rgba(19, 78, 74, 0.36); color:#2DD4BF; border-color:#2DD4BF;">Quote matched</span>
@@ -1247,7 +1318,7 @@ function renderChangeSet(cs, pipelineTrace = null) {
                         <p class="text-xs font-medium leading-relaxed" style="color:#F8FAFC;">${escapeHtml(cl.statement)}</p>
                         ${cl.conditions ? `<p class="text-[11px] px-2 py-1 rounded border" style="background:rgba(120, 53, 15, 0.32); border-color:#F59E0B; color:#F59E0B;"><strong>Conditions / Scope:</strong> ${escapeHtml(cl.conditions)}</p>` : ""}
                         ${quoteText ? `
-                            <div class="p-2 rounded-lg border text-[11px] italic" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18); color:#94A3B8;">
+                            <div class="p-2 rounded-lg border text-[11px] italic" style="background:rgba(10, 15, 30, 0.85); border-color:rgba(148, 163, 184, 0.18); color:#94A3B8;">
                                 <i class="fa-solid fa-quote-left text-[9px] mr-1" style="color:#38BDF8;"></i>"${escapeHtml(quoteText)}"
                                 <span class="not-italic font-mono-code text-[10px] ml-1" style="color:#38BDF8;">[${escapeHtml(anchorText)}]</span>
                             </div>
@@ -1279,7 +1350,7 @@ function renderChangeSet(cs, pipelineTrace = null) {
                     <input type="checkbox" disabled class="mt-1 w-3.5 h-3.5 rounded cursor-not-allowed">
                     <div class="flex-1 space-y-1">
                         <div class="flex items-center justify-between flex-wrap gap-1">
-                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-white border" style="color:#F43F5E; border-color:#F43F5E;">
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded border" style="background:rgba(10, 15, 30, 0.85); color:#F43F5E; border-color:#F43F5E;">
                                 <i class="fa-solid fa-triangle-exclamation mr-1"></i>Needs review · Held Back
                             </span>
                             <span class="font-mono-code text-[10px]" style="color:#F43F5E;">${escapeHtml(conflictTargets)}</span>
@@ -1298,7 +1369,7 @@ function renderChangeSet(cs, pipelineTrace = null) {
                     <input type="checkbox" disabled class="mt-1 w-3.5 h-3.5 rounded cursor-not-allowed">
                     <div class="flex-1 space-y-1">
                         <div class="flex items-center justify-between flex-wrap gap-1">
-                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-white border" style="color:#F43F5E; border-color:#F43F5E;">
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded border" style="background:rgba(10, 15, 30, 0.85); color:#F43F5E; border-color:#F43F5E;">
                                 <i class="fa-solid fa-ban mr-1"></i>Blocked · Quote Mismatch
                             </span>
                         </div>
