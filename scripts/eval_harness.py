@@ -1,20 +1,15 @@
 import asyncio
 import json
 import os
-import sys
 from pathlib import Path
 import httpx
 from dotenv import load_dotenv
-
-ROOT_DIR = Path(__file__).resolve().parent.parent
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
-
 from backend.ingest import DocumentIngester
 from backend.model_client import ModelServiceClient
 from backend.schemas import FactClaim, SourceEvidence, VerificationStatus
 from model.server import app as model_app
 
+ROOT_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
 
 

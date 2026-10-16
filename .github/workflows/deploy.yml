@@ -16,9 +16,6 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # 1. Path Filtering: Detect changes across frontend / backend / model tiers
-  # ---------------------------------------------------------------------------
   changes:
     name: Detect Tier Changes
     runs-on: ubuntu-latest
@@ -38,6 +35,8 @@ jobs:
             frontend:
               - 'frontend/**'
               - 'static/**'
+              - 'scripts/lint_no_comments.py'
+              - '.pre-commit-config.yaml'
               - 'pyproject.toml'
               - 'uv.lock'
               - 'Dockerfile'
@@ -49,6 +48,9 @@ jobs:
               - 'ingest.py'
               - 'seed_domain.json'
               - 'tests/test_server.py'
+              - 'tests/test_3tier_rest_loop.py'
+              - 'scripts/lint_no_comments.py'
+              - '.pre-commit-config.yaml'
               - 'pyproject.toml'
               - 'uv.lock'
               - 'Dockerfile'
@@ -59,6 +61,9 @@ jobs:
               - 'models.py'
               - 'validator.py'
               - 'tests/test_validator.py'
+              - 'tests/test_3tier_rest_loop.py'
+              - 'scripts/lint_no_comments.py'
+              - '.pre-commit-config.yaml'
               - 'pyproject.toml'
               - 'uv.lock'
               - 'Dockerfile'
@@ -77,9 +82,26 @@ jobs:
             echo "model=${{ steps.filter.outputs.model }}" >> "$GITHUB_OUTPUT"
           fi
 
-  # ---------------------------------------------------------------------------
-  # 2A. Parallel CI — Frontend Tier
-  # ---------------------------------------------------------------------------
+  ci-lint:
+    name: CI — Zero-Comment & Ruff Linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv with dependency cache
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Enforce Zero Comments / Docstrings & Ruff Lint
+        run: |
+          uv run python scripts/lint_no_comments.py
+          uv run ruff check .
+
   ci-frontend:
     name: CI — Frontend Tier
     needs: changes
@@ -96,6 +118,11 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --frozen
+
+      - name: Lint Frontend Tier (No-Comment & Ruff)
+        run: |
+          uv run python scripts/lint_no_comments.py frontend
+          uv run ruff check frontend
 
       - name: Validate Frontend assets & server endpoints
         run: |
@@ -122,9 +149,6 @@ jobs:
           print('Frontend Tier CI passed!')
           "
 
-  # ---------------------------------------------------------------------------
-  # 2B. Parallel CI — Backend Tier
-  # ---------------------------------------------------------------------------
   ci-backend:
     name: CI — Backend Tier
     needs: changes
@@ -142,6 +166,11 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
+      - name: Lint Backend Tier (No-Comment & Ruff)
+        run: |
+          uv run python scripts/lint_no_comments.py backend tests/test_server.py tests/test_3tier_rest_loop.py
+          uv run ruff check backend tests/test_server.py tests/test_3tier_rest_loop.py
+
       - name: Verify Backend 3-Tier decoupling & run Backend tests
         run: |
           uv run python -m py_compile backend/schemas.py backend/store.py backend/ingest.py backend/model_client.py backend/server.py
@@ -150,7 +179,6 @@ jobs:
           from fastapi.testclient import TestClient
           from backend.server import app
 
-          # Enforce strict 3-Tier separation: Backend must not import google.genai directly
           for py_file in Path('backend').glob('*.py'):
               content = py_file.read_text(encoding='utf-8')
               assert 'from google import genai' not in content, f'Prohibited SDK import in {py_file}'
@@ -164,9 +192,6 @@ jobs:
           "
           PYTHONPATH=. uv run pytest tests/test_server.py tests/test_3tier_rest_loop.py -v
 
-  # ---------------------------------------------------------------------------
-  # 2C. Parallel CI — Model Tier (Gemini 4 Argon)
-  # ---------------------------------------------------------------------------
   ci-model:
     name: CI — Model Tier
     needs: changes
@@ -183,6 +208,11 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --frozen
+
+      - name: Lint Model Tier (No-Comment & Ruff)
+        run: |
+          uv run python scripts/lint_no_comments.py model tests/test_validator.py
+          uv run ruff check model tests/test_validator.py
 
       - name: Verify Gemini 4 Argon compliance & run Model Tier tests
         run: |
@@ -215,14 +245,12 @@ jobs:
           "
           PYTHONPATH=. uv run pytest tests/test_validator.py -v
 
-  # ---------------------------------------------------------------------------
-  # 3. Automated GitHub Release on Merge to main
-  # ---------------------------------------------------------------------------
   release:
     name: Create GitHub Release
-    needs: [ci-frontend, ci-backend, ci-model]
+    needs: [ci-lint, ci-frontend, ci-backend, ci-model]
     if: |
       always() &&
+      needs.ci-lint.result == 'success' &&
       (needs.ci-frontend.result == 'success' || needs.ci-frontend.result == 'skipped') &&
       (needs.ci-backend.result == 'success' || needs.ci-backend.result == 'skipped') &&
       (needs.ci-model.result == 'success' || needs.ci-model.result == 'skipped') &&
@@ -263,28 +291,27 @@ jobs:
           draft: false
           prerelease: false
 
-  # ---------------------------------------------------------------------------
-  # 4. Remote Docker Build & Cloud Run Deployment (Port 8000)
-  # ---------------------------------------------------------------------------
   deploy:
     name: Deploy to Google Cloud Run
     needs: [release]
     if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
-    env:
-      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud
-        if: ${{ env.GCP_SA_KEY != '' }}
         uses: google-github-actions/auth@v2
+        if: ${{ env.GCP_SA_KEY != '' }}
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Deploy container to Cloud Run (asia-northeast3, port 8000)
+      - name: Deploy container to Cloud Run (asia-northeast3)
         if: ${{ env.GCP_SA_KEY != '' }}
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: project-idea
@@ -293,4 +320,5 @@ jobs:
           env_vars: |
             RELEASE_VERSION=${{ needs.release.outputs.tag_name }}
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-          flags: "--port=8000 --allow-unauthenticated --quiet"
+            MODEL_API_URL=http://127.0.0.1:8001
+          flags: "--allow-unauthenticated --quiet"

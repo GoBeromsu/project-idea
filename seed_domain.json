@@ -6,7 +6,10 @@
       "synonyms": ["MCTS", "tree search heuristic", "rollout search"],
       "description": "A heuristic search algorithm for decision processes combining tree search with Monte Carlo simulations.",
       "status": "VERIFIED",
-      "layer": "domain"
+      "layer": "domain",
+      "node_type": "TERM",
+      "is_seed": true,
+      "verification_badges": ["Seed knowledge"]
     },
     {
       "id": "concept_rlhf",
@@ -14,7 +17,10 @@
       "synonyms": ["RLHF", "human feedback alignment", "preference tuning"],
       "description": "Technique that trains a reward model from human comparisons to fine-tune language models.",
       "status": "VERIFIED",
-      "layer": "domain"
+      "layer": "domain",
+      "node_type": "TERM",
+      "is_seed": true,
+      "verification_badges": ["Seed knowledge"]
     },
     {
       "id": "concept_tot",
@@ -22,7 +28,10 @@
       "synonyms": ["ToT", "tree-of-thought prompting", "branching reasoning"],
       "description": "A problem-solving framework that generalizes chain-of-thought to explore multiple reasoning paths.",
       "status": "VERIFIED",
-      "layer": "domain"
+      "layer": "domain",
+      "node_type": "CONCEPT",
+      "is_seed": true,
+      "verification_badges": ["Seed knowledge"]
     },
     {
       "id": "concept_agentic_loop",
@@ -30,7 +39,10 @@
       "synonyms": ["agent loop", "ReAct loop", "autonomous loop"],
       "description": "An iterative execution cycle of perception, reasoning, tool execution, and self-correction.",
       "status": "VERIFIED",
-      "layer": "domain"
+      "layer": "domain",
+      "node_type": "CONCEPT",
+      "is_seed": true,
+      "verification_badges": ["Seed knowledge"]
     },
     {
       "id": "concept_interactions_api",
@@ -38,7 +50,43 @@
       "synonyms": ["client.interactions.create", "Gemini Interactions API", "Argon Interactions API"],
       "description": "Google GenAI API facilitating multi-turn stateful conversational interactions with implicit caching.",
       "status": "VERIFIED",
-      "layer": "domain"
+      "layer": "domain",
+      "node_type": "ENTITY",
+      "is_seed": true,
+      "verification_badges": ["Seed knowledge"]
+    },
+    {
+      "id": "concept_kv_cache",
+      "name": "KV Cache",
+      "synonyms": ["key-value cache", "attention KV cache", "autoregressive KV state"],
+      "description": "Cached key and value tensors across attention layers that avoid redundant recomputation during autoregressive token generation.",
+      "status": "VERIFIED",
+      "layer": "domain",
+      "node_type": "TERM",
+      "is_seed": true,
+      "verification_badges": ["Seed knowledge"]
+    },
+    {
+      "id": "concept_paged_attention",
+      "name": "PagedAttention",
+      "synonyms": ["paged attention", "vLLM block-paged KV management", "virtual memory KV paging"],
+      "description": "An attention algorithm inspired by OS virtual memory paging that partitions the KV cache into non-contiguous fixed-size blocks.",
+      "status": "VERIFIED",
+      "layer": "domain",
+      "node_type": "CONCEPT",
+      "is_seed": true,
+      "verification_badges": ["Seed knowledge"]
+    },
+    {
+      "id": "concept_speculative_decoding",
+      "name": "Speculative Decoding",
+      "synonyms": ["speculative sampling", "draft-and-verify decoding", "assisted generation"],
+      "description": "Inference acceleration technique where a fast draft model proposes candidate token sequences verified in parallel by the target LLM.",
+      "status": "VERIFIED",
+      "layer": "domain",
+      "node_type": "CONCEPT",
+      "is_seed": true,
+      "verification_badges": ["Seed knowledge"]
     }
   ],
   "relations": [
@@ -57,6 +105,22 @@
       "predicate": "implements_via",
       "description": "Autonomous agents maintain stateful reasoning loops via the Interactions API.",
       "status": "VERIFIED"
+    },
+    {
+      "id": "rel_paged_optimizes_kv",
+      "source_id": "concept_paged_attention",
+      "target_id": "concept_kv_cache",
+      "predicate": "optimizes",
+      "description": "PagedAttention eliminates contiguous memory fragmentation in KV Cache allocation.",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "rel_speculative_uses_kv",
+      "source_id": "concept_speculative_decoding",
+      "target_id": "concept_kv_cache",
+      "predicate": "reuses",
+      "description": "Speculative Decoding verifies multiple drafted tokens in a single forward pass while reusing KV Cache prefix states.",
+      "status": "VERIFIED"
     }
   ],
   "claims": [
@@ -65,11 +129,28 @@
       "concept_id": "concept_tot",
       "statement": "Tree of Thoughts allows LMs to perform deliberate decision making by considering multiple paths.",
       "status": "VERIFIED",
+      "is_seed": true,
+      "verification_badges": ["Seed knowledge", "Quote matched"],
       "evidence": {
         "url": "https://arxiv.org/abs/2305.10601",
         "title": "Tree of Thoughts: Deliberate Problem Solving with Large Language Models",
         "section_anchor": "Abstract",
         "exact_quote": "Tree of Thoughts allows LMs to perform deliberate decision making by considering multiple different reasoning paths",
+        "mechanical_verified": true
+      }
+    },
+    {
+      "id": "claim_paged_attention_waste",
+      "concept_id": "concept_paged_attention",
+      "statement": "PagedAttention partitions the KV cache of each sequence into blocks so memory is allocated on demand with near-zero internal fragmentation.",
+      "status": "VERIFIED",
+      "is_seed": true,
+      "verification_badges": ["Seed knowledge", "Quote matched"],
+      "evidence": {
+        "url": "https://arxiv.org/abs/2309.06180",
+        "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+        "section_anchor": "Abstract",
+        "exact_quote": "PagedAttention divides the sequence's KV cache into blocks, each of which can contain the attention keys and values for a fixed number of tokens",
         "mechanical_verified": true
       }
     }

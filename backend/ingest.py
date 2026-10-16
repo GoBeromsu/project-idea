@@ -1,6 +1,4 @@
-import re
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict
 from bs4 import BeautifulSoup
 import httpx
 

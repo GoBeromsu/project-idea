@@ -1,0 +1,16 @@
+repos:
+  - repo: local
+    hooks:
+      - id: no-comments-linter
+        name: Enforce Zero Comments & Docstrings (Python, JS, HTML)
+        entry: uv run python scripts/lint_no_comments.py
+        language: system
+        types_or: [python, javascript, html]
+        pass_filenames: true
+
+      - id: ruff-check
+        name: Ruff Linter
+        entry: uv run ruff check
+        language: system
+        types: [python]
+        pass_filenames: true
