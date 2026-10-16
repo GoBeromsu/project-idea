@@ -62,14 +62,16 @@ flowchart LR
     end
 
     subgraph Tier3["Tier 3 · Model Agent Service (model/ :8001)"]
+        QueryEP["POST /api/v1/query<br/>Read-Only Grounded QA (mutated_wiki=False)"]
         Turn1["POST /api/v1/extract<br/>Gemini 4 Argon Turn 1 (Interactions API)"]
         Validator["POST /api/v1/verify-quote<br/>Deterministic Verbatim Quote Validator"]
         Turn2["POST /api/v1/correct<br/>Argon Turn 2 Repair (previous_interaction_id)"]
         Builder["POST /api/v1/build-changeset<br/>Staged ChangeSet & Conflict Gate"]
     end
 
-    Prompt -->|"GET /api/state<br/>POST /api/assimilate"| Orchestrator
+    Prompt -->|"GET /api/state · POST /api/query<br/>POST /api/assimilate"| Orchestrator
     Cards -->|"POST /api/changesets/{id}/approve<br/>POST /api/changesets/{id}/reject"| Store
+    Orchestrator -->|"Read-Only Query"| QueryEP
     Orchestrator --> Ingest
     Orchestrator -->|"1. Extract & Align"| Turn1
     Turn1 -->|"Check Verbatim Quotes"| Validator
@@ -199,13 +201,15 @@ project-idea/
 
 | Tier | Method & Endpoint | Description |
 | :--- | :--- | :--- |
-| **Frontend (`:3000`)** | `GET /` · `GET /static/*` | Serves the 3D WebGL Semantic Library SPA and injects runtime `BACKEND_API_URL`. |
+| **Frontend (`:3000`)** | `GET /` · `GET /static/*` | Serves the 3D WebGL Semantic Library SPA (`index.html`, `scene_physics.js`, `app.js`) and injects `BACKEND_API_URL`. |
 | **Frontend (`:3000`)** | `GET /health` | Health probe returning frontend tier status and bound backend URL. |
 | **Backend (`:8000`)** | `GET /api/state` | Returns active session `concepts`, `relations`, approved `claims`, and pending `changesets`. |
-| **Backend (`:8000`)** | `POST /api/assimilate` | Ingests a URL or raw text snippet and executes the 2-turn Model Tier assimilation loop. |
-| **Backend (`:8000`)** | `POST /api/changesets/{id}/approve` | Commits verified proposals from a pending `ChangeSet` into the session's Living Wiki. |
+| **Backend (`:8000`)** | `POST /api/query` | Executes a read-only grounded query (`QueryRequest` $\rightarrow$ `QueryResponse`) against approved session knowledge (`mutated_wiki = False`). |
+| **Backend (`:8000`)** | `POST /api/assimilate` | Ingests a public URL or raw text snippet (`prepare_document`) and orchestrates the 2-turn Model Tier assimilation loop. |
+| **Backend (`:8000`)** | `POST /api/changesets/{id}/approve` | Selectively commits verified proposals (`concept_ids`, `relation_ids`, `claim_ids`) with referential integrity checks into the Living Wiki. |
 | **Backend (`:8000`)** | `POST /api/changesets/{id}/reject` | Rejects a pending `ChangeSet` while preserving existing session knowledge unchanged. |
 | **Backend (`:8000`)** | `POST /api/reset` | Resets the active session store back to the canonical `seed_domain.json` baseline. |
+| **Model (`:8001`)** | `POST /api/v1/query` | Runs Gemini 4 Argon grounded QA (`AssimilationEngine.answer_query`) returning node citations and thought summaries. |
 | **Model (`:8001`)** | `POST /api/v1/verify-quote` | Deterministically verifies verbatim substring existence (`EvidenceValidator.verify_quote`). |
 | **Model (`:8001`)** | `POST /api/v1/extract` | Runs Turn-1 Gemini 4 Argon extraction (`client.interactions.create`) + initial quote check. |
 | **Model (`:8001`)** | `POST /api/v1/correct` | Runs Turn-2 stateful self-correction via `previous_interaction_id` on failed quotes. |
