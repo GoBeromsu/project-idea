@@ -1,6 +1,11 @@
 from fastapi.testclient import TestClient
 from model.validator import EvidenceValidator, normalize_text
-from model.schemas import FactClaim, SourceEvidence, VerificationStatus, Relation
+from model.schemas import (
+    FactClaim,
+    Relation,
+    SourceEvidence,
+    VerificationStatus,
+)
 from model.server import app as model_app
 
 model_client = TestClient(model_app)
@@ -21,6 +26,10 @@ def test_evidence_validator_normalized_whitespace():
     valid, err = EvidenceValidator.verify_quote(source, quote)
     assert valid is True
 
+    valid_non_strict, err_non_strict = EvidenceValidator.verify_quote(source, quote, strict=False)
+    assert valid_non_strict is True
+    assert err_non_strict is None
+
 
 def test_evidence_validator_reject_hallucination():
     source = "Monte Carlo Tree Search is effective for combinatorial games."
@@ -28,6 +37,10 @@ def test_evidence_validator_reject_hallucination():
     valid, err = EvidenceValidator.verify_quote(source, hallucinated)
     assert valid is False
     assert "Hallucination detected" in err
+
+    empty_valid, empty_err = EvidenceValidator.verify_quote(source, "   ")
+    assert empty_valid is False
+    assert "Quote is empty" in empty_err
 
 
 def test_evidence_validator_validate_claim_and_referential_integrity():
@@ -46,6 +59,21 @@ def test_evidence_validator_validate_claim_and_referential_integrity():
     assert valid is True
     assert err is None
     assert claim.evidence.mechanical_verified is True
+
+    bad_claim = FactClaim(
+        id="cl_bad",
+        concept_id="concept_interactions_api",
+        statement="Fabricated claim.",
+        status=VerificationStatus.PROPOSED,
+        evidence=SourceEvidence(
+            exact_quote="nonexistent span in source",
+            mechanical_verified=False,
+        ),
+    )
+    bad_valid, bad_err = EvidenceValidator.validate_claim(bad_claim, source)
+    assert bad_valid is False
+    assert bad_err is not None
+    assert bad_claim.evidence.mechanical_verified is False
 
     rel = Relation(
         id="rel_1",

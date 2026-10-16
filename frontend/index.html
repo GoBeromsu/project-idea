@@ -14,10 +14,12 @@
     <style>
         :root {
             --idea-canvas: #F7F9FC;
+            --idea-ivory: #F4F3EE;
             --idea-surface: #FFFFFF;
-            --idea-ink: #202124;
+            --idea-ink: #141413;
             --idea-muted: #5F6368;
             --idea-border: #DADCE0;
+            --idea-hairline: #E5E3DC;
             --idea-portal-dark: #18212C;
             --idea-blue: #4285F4;
             --idea-red: #EA4335;
@@ -25,9 +27,10 @@
             --idea-green: #34A853;
         }
         body {
-            background-color: var(--idea-canvas);
+            background: radial-gradient(circle at 50% 42%, var(--idea-ivory) 0%, var(--idea-canvas) 78%);
             color: var(--idea-ink);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
             overflow: hidden;
             margin: 0;
             padding: 0;
@@ -45,24 +48,26 @@
         }
         .idea-surface-card {
             background: rgba(255, 255, 255, 0.94);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--idea-border);
-            box-shadow: 0 2px 6px rgba(32, 33, 36, 0.06), 0 12px 28px rgba(32, 33, 36, 0.09);
+            box-shadow: 0 2px 6px rgba(20, 20, 19, 0.05), 0 14px 32px rgba(20, 20, 19, 0.08);
         }
         .idea-topbar {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--idea-border);
-            box-shadow: 0 1px 3px rgba(32, 33, 36, 0.04);
+            background: rgba(244, 243, 238, 0.90);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--idea-hairline);
+            box-shadow: 0 1px 3px rgba(20, 20, 19, 0.04);
         }
         .idea-zone-pill {
-            background: rgba(255, 255, 255, 0.88);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid var(--idea-border);
-            box-shadow: 0 1px 4px rgba(32, 33, 36, 0.05);
+            background: rgba(255, 255, 255, 0.90);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--idea-hairline);
+            border-radius: 9999px;
+            letter-spacing: 0.08em;
+            box-shadow: 0 1px 4px rgba(20, 20, 19, 0.05);
             color: var(--idea-ink);
         }
         #overlay-card {

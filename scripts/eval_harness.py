@@ -4,9 +4,10 @@ import os
 from pathlib import Path
 import httpx
 from dotenv import load_dotenv
-from backend.ingest import DocumentIngester
+from backend.ingest import DocumentIngester, validate_public_url
 from backend.model_client import ModelServiceClient
 from backend.schemas import FactClaim, SourceEvidence, VerificationStatus
+from backend.store import KnowledgeStore
 from model.server import app as model_app
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -87,7 +88,65 @@ async def run_benchmark():
         c.status == VerificationStatus.UNRESOLVED for c in cs3.proposed_claims
     ), "Failed to flag contradiction as UNRESOLVED!"
 
-    print("\nALL 3 BENCHMARK TESTS PASSED SUCCESSFULLY!")
+    print("\n--- TEST 4: SSRF & Private/Metadata URL Blocking (AC-03 / AC-10) ---")
+    unsafe_targets = [
+        "http://127.0.0.1/admin",
+        "http://169.254.169.254/latest/meta-data/",
+        "http://localhost:8000/health",
+        "file:///etc/passwd",
+    ]
+    for target in unsafe_targets:
+        blocked = False
+        try:
+            validate_public_url(target)
+        except ValueError as err:
+            blocked = True
+            print(f" - Blocked unsafe URL '{target}': {err}")
+        assert blocked, f"Failed to block unsafe URL: {target}"
+
+    print("\n--- TEST 5: Pre-Query vs Post-Approval Re-Query & Selective Approval (AC-02 / AC-07 / AC-08) ---")
+    temp_store = KnowledgeStore()
+    pre_ontology = {
+        "concepts": [c.model_dump() for c in temp_store.concepts.values()],
+        "relations": [r.model_dump() for r in temp_store.relations],
+    }
+    pre_query_res = await client.query_knowledge(
+        question="How does the Interactions API manage state in Gemini 4 Argon?",
+        seed_ontology=pre_ontology,
+        existing_claims=list(temp_store.claims.values()),
+    )
+    print(f"Pre-Query Citations: {len(pre_query_res.citations)} | Mutated Wiki: {pre_query_res.mutated_wiki}")
+    assert pre_query_res.mutated_wiki is False
+    assert all(c.is_seed is True for c in pre_query_res.citations)
+
+    stored_cs2 = temp_store.add_changeset(cs2, source_text=doc2["full_text"], pipeline_trace=trace2)
+    approved_cs2 = temp_store.approve_changeset(
+        stored_cs2.id,
+        concept_ids=[c.id for c in stored_cs2.proposed_concepts],
+        relation_ids=[r.id for r in stored_cs2.proposed_relations],
+        claim_ids=[cl.id for cl in stored_cs2.proposed_claims],
+    )
+    assert approved_cs2 is not None and approved_cs2.status == "APPROVED"
+
+    post_ontology = {
+        "concepts": [c.model_dump() for c in temp_store.concepts.values()],
+        "relations": [r.model_dump() for r in temp_store.relations],
+    }
+    post_query_res = await client.query_knowledge(
+        question="What prompt cache discount does the Interactions API grant according to our session library?",
+        seed_ontology=post_ontology,
+        existing_claims=list(temp_store.claims.values()),
+    )
+    print(
+        f"Post-Approval Query Citations: {len(post_query_res.citations)} | "
+        f"Session Citations: {sum(1 for c in post_query_res.citations if not c.is_seed)}"
+    )
+    assert post_query_res.mutated_wiki is False
+    assert any(c.is_seed is False for c in post_query_res.citations), (
+        "Expected post-approval query to cite newly approved session knowledge!"
+    )
+
+    print("\nALL 5 BENCHMARK TESTS PASSED SUCCESSFULLY!")
 
 
 if __name__ == "__main__":
