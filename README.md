@@ -223,13 +223,24 @@ project-idea/
 
 ## ✅ Verification Loop & Benchmark Suite
 
-### Automated Evaluation Scenarios (`scripts/eval_harness.py`)
+### Automated Live Evaluation Scenarios (`scripts/eval_harness.py`)
 
 | Scenario | Capability Verified | Expected Outcome | Status |
 | :--- | :--- | :--- | :---: |
-| **1. Synonym Alignment** | Canonical Concept Resolution | Maps *"tree search heuristic"* to `concept_mcts` (`MATCH`) instead of duplicating nodes | ✅ **PASS** |
-| **2. Mechanical Quote Grounding** | Verbatim Substring + Turn-2 Repair | Rejects non-verbatim quotes; Argon repairs quote via `previous_interaction_id` | ✅ **PASS** |
-| **3. Contradiction Gate** | Silent Overwrite Prevention | Conflicting claims are flagged `UNRESOLVED` and held back from automatic Wiki mutation | ✅ **PASS** |
+| **1. Synonym Alignment** | Canonical Concept Resolution (`AC-04`) | Maps *"tree search heuristic"* to `concept_mcts` (`MATCH`) instead of duplicating nodes | ✅ **PASS** |
+| **2. Mechanical Quote Grounding** | Verbatim Substring + Turn-2 Repair (`AC-05` / `AC-06`) | Rejects non-verbatim quotes; Argon repairs quote via `previous_interaction_id` | ✅ **PASS** |
+| **3. Contradiction Gate** | Silent Overwrite Prevention (`AC-04` / `AC-06`) | Conflicting claims are flagged `UNRESOLVED` and held back from automatic Wiki mutation | ✅ **PASS** |
+| **4. SSRF & Unsafe Scheme Guard** | Egress Security Boundary (`AC-03` / `AC-10`) | Blocks `127.0.0.1`, `169.254.169.254`, `localhost`, and `file://` URLs prior to fetch | ✅ **PASS** |
+| **5. Pre-Query $\rightarrow$ Selective Approval $\rightarrow$ Re-Query** | End-to-End Session Loop (`AC-02` / `AC-07` / `AC-08`) | Pre-query cites seed nodes (`mutated_wiki=False`); post-approval query cites newly approved session nodes (`is_seed=False`) | ✅ **PASS** |
+
+### Deterministic Test Suite (`tests/`)
+
+| Test Module | Scope & Verification Gates |
+| :--- | :--- |
+| **`tests/test_3tier_rest_loop.py`** | Full 3-tier ASGI loop (`Backend :8000` $\leftrightarrow$ `Model :8001`): Turn-1 hallucination interception, Turn-2 `previous_interaction_id` repair, `Blocked` claim isolation, and full Golden Path (`Pre-Query` $\rightarrow$ `Assimilate` $\rightarrow$ `Selective Approve` $\rightarrow$ `Post-Query`). |
+| **`tests/test_server.py`** | SSRF/private IP & binary PDF (`application/pdf`) rejection with state preservation (`HTTP 422`), selective item-level approval (`concept_ids`, `relation_ids`, `claim_ids`), `HTTP 400` rejection of forced `Blocked`/`UNRESOLVED` claim IDs, and approval idempotency. |
+| **`tests/test_validator.py`** | Unicode NFC + whitespace-normalized verbatim quote verification, empty/hallucinated quote rejection, and graph referential integrity checks (`Relation` endpoints & `FactClaim.concept_id`). |
+| **`tests/test_ingest.py`** | Deterministic HTML extraction (`BeautifulSoup`), boilerplate stripping, and section heading anchor (`#anchor`) attribution. |
 
 ### Product Acceptance Criteria (`PRD.md` AC-01 – AC-10)
 
