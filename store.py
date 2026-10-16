@@ -1,0 +1,84 @@
+"""
+Knowledge Store for Project IDEA.
+Maintains canonical concepts, relations, living wiki claims, and pending ChangeSets.
+Thread-safe and persistent to JSON.
+"""
+import json
+import os
+from typing import Dict, List, Optional
+from models import Concept, Relation, FactClaim, ChangeSet, VerificationStatus
+
+DATA_PATH = "data/store.json"
+
+class KnowledgeStore:
+    def __init__(self, seed_path: str = "seed_domain.json"):
+        self.seed_path = seed_path
+        self.concepts: Dict[str, Concept] = {}
+        self.relations: Dict[str, Relation] = {}
+        self.claims: Dict[str, FactClaim] = {}
+        self.changesets: Dict[str, ChangeSet] = {}
+        self._load_seed()
+
+    def _load_seed(self):
+        if os.path.exists(self.seed_path):
+            with open(self.seed_path, "r") as f:
+                data = json.load(f)
+            for c in data.get("concepts", []):
+                self.concepts[c["id"]] = Concept(**c)
+            for r in data.get("relations", []):
+                self.relations[r["id"]] = Relation(**r)
+            for cl in data.get("claims", []):
+                self.claims[cl["id"]] = FactClaim(**cl)
+
+    def get_state(self) -> Dict:
+        return {
+            "concepts": [c.model_dump() for c in self.concepts.values()],
+            "relations": [r.model_dump() for r in self.relations.values()],
+            "claims": [cl.model_dump() for cl in self.claims.values()],
+            "pending_changesets": [cs.model_dump() for cs in self.changesets.values() if cs.status == "PENDING"],
+            "all_changesets": [cs.model_dump() for cs in self.changesets.values()],
+        }
+
+    def add_changeset(self, cs: ChangeSet):
+        self.changesets[cs.id] = cs
+
+    def get_changeset(self, cs_id: str) -> Optional[ChangeSet]:
+        return self.changesets.get(cs_id)
+
+    def approve_changeset(self, cs_id: str) -> Optional[ChangeSet]:
+        cs = self.changesets.get(cs_id)
+        if not cs:
+            return None
+        cs.status = "APPROVED"
+
+        # Assimilate concepts into graph
+        for c in cs.proposed_concepts:
+            c.status = VerificationStatus.VERIFIED
+            c.layer = "graph"
+            self.concepts[c.id] = c
+
+        # Assimilate relations
+        for r in cs.proposed_relations:
+            r.status = VerificationStatus.VERIFIED
+            self.relations[r.id] = r
+
+        # Assimilate proposed claims
+        for cl in cs.proposed_claims:
+            cl.status = VerificationStatus.VERIFIED
+            self.claims[cl.id] = cl
+
+        return cs
+
+    def reject_changeset(self, cs_id: str) -> Optional[ChangeSet]:
+        cs = self.changesets.get(cs_id)
+        if not cs:
+            return None
+        cs.status = "REJECTED"
+        return cs
+
+    def reset_to_seed(self):
+        self.concepts.clear()
+        self.relations.clear()
+        self.claims.clear()
+        self.changesets.clear()
+        self._load_seed()
