@@ -31,7 +31,6 @@ def test_model_tier_endpoints():
     assert res_health.json()["tier"] == "model"
     assert res_health.json()["model"] == "gemini-4-argon"
 
-    # Test deterministic quote verification endpoint
     source_text = "Monte Carlo Tree Search combines tree search with random rollouts."
     res_verify = model_client.post(
         "/api/v1/verify-quote",
@@ -44,7 +43,6 @@ def test_model_tier_endpoints():
     assert res_verify.status_code == 200
     assert res_verify.json()["valid"] is True
 
-    # Test build-changeset endpoint
     res_cs = model_client.post(
         "/api/v1/build-changeset",
         json={
@@ -104,17 +102,14 @@ def test_backend_tier_health_and_state():
 
 
 def test_backend_approve_and_reject_changeset_flow():
-    # Reset store
     res = backend_client.post("/api/reset")
     assert res.status_code == 200
 
-    # Non-existent changeset returns 404
     res_404 = backend_client.post("/api/changesets/nonexistent/approve")
     assert res_404.status_code == 404
     res_reject_404 = backend_client.post("/api/changesets/nonexistent/reject")
     assert res_reject_404.status_code == 404
 
-    # Stage a pending ChangeSet and test approve
     cs_approve = ChangeSet(
         id="cs_test_approve",
         source_title="Approve Test Doc",
@@ -148,7 +143,6 @@ def test_backend_approve_and_reject_changeset_flow():
     assert res_app.json()["status"] == "approved"
     assert res_app.json()["changeset"]["status"] == "APPROVED"
 
-    # Stage another ChangeSet and test reject
     cs_reject = ChangeSet(
         id="cs_test_reject",
         source_title="Reject Test Doc",
@@ -159,5 +153,4 @@ def test_backend_approve_and_reject_changeset_flow():
     assert res_rej.json()["status"] == "rejected"
     assert res_rej.json()["changeset"]["status"] == "REJECTED"
 
-    # Clean up back to seed
     backend_client.post("/api/reset")

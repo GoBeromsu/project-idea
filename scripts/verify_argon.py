@@ -1,5 +1,3 @@
-"""Smoke test for Gemini 4 Argon on the Interactions API with Structured Output."""
-
 from __future__ import annotations
 
 import os
@@ -21,7 +19,6 @@ class ArgonReadinessResponse(BaseModel):
 
 
 def load_env_files() -> None:
-    """Load credentials from project .env or ~/.env."""
     project_env = Path(__file__).resolve().parent.parent / ".env"
     home_env = Path.home() / ".env"
     if project_env.exists():

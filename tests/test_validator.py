@@ -60,7 +60,6 @@ def test_evidence_validator_validate_claim_and_referential_integrity():
 
 def test_model_tier_verify_quote_rest_endpoint():
     source = "Gemini 4 Argon supports implicit context caching with 95% discount."
-    # Valid quote
     res_ok = model_client.post(
         "/api/v1/verify-quote",
         json={
@@ -74,7 +73,6 @@ def test_model_tier_verify_quote_rest_endpoint():
     assert data_ok["valid"] is True
     assert data_ok["error"] is None
 
-    # Invalid / hallucinated quote
     res_bad = model_client.post(
         "/api/v1/verify-quote",
         json={

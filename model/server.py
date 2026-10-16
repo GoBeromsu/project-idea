@@ -1,8 +1,3 @@
-"""
-FastAPI REST Server for Project IDEA Model Tier (Gemini 4 Argon Agent API).
-Exposes deterministic evidence validation, Turn 1 extraction, Turn 2 self-correction,
-ChangeSet construction, and end-to-end assimilation with trace.
-"""
 import os
 from typing import Optional
 import uvicorn

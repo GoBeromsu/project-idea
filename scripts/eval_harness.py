@@ -1,10 +1,3 @@
-"""
-Evaluation and Benchmark Harness for Project IDEA (3-Tier Architecture).
-Validates the 3 core criteria across the Backend -> Model REST API pipeline:
-1. Synonym Blindness Test (Canonical Matching vs Fragmentation)
-2. Hallucinated Quote Rejection Test (Mechanical Validator + Argon Self-Correction)
-3. Contradiction Detection Test (Silent Overwrite Prevention -> UNRESOLVED)
-"""
 import asyncio
 import json
 import os
@@ -34,7 +27,6 @@ def _load_seed() -> dict:
 
 
 async def run_benchmark():
-    # Use live HTTP if MODEL_API_URL is set, otherwise wire directly to model.server.app via ASGITransport
     live_url = os.getenv("MODEL_API_URL")
     if live_url:
         client = ModelServiceClient(base_url=live_url)

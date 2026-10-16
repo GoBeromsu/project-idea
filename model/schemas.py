@@ -1,14 +1,9 @@
-"""
-Data models and REST API schemas for Project IDEA Model Tier.
-Adheres to Pydantic v2 and strict verification status semantics.
-"""
 from enum import Enum
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 
 
 class _AwaitableModelMixin:
-    """Allows returned Pydantic models to be used both synchronously and with `await`."""
     def __await__(self):
         async def _coro():
             return self
@@ -16,16 +11,16 @@ class _AwaitableModelMixin:
 
 
 class VerificationStatus(str, Enum):
-    VERIFIED = "VERIFIED"        # Verified against domain and exact source evidence
-    PROPOSED = "PROPOSED"        # Novel concept or relation, waiting for user review
-    UNRESOLVED = "UNRESOLVED"    # Contradiction or ambiguity detected, requires human decision
-    REJECTED = "REJECTED"        # Disproven or explicitly rejected by user
+    VERIFIED = "VERIFIED"
+    PROPOSED = "PROPOSED"
+    UNRESOLVED = "UNRESOLVED"
+    REJECTED = "REJECTED"
 
 
 class AlignmentAction(str, Enum):
-    MATCH = "MATCH"              # Maps to canonical concept in seed ontology
-    PROPOSE = "PROPOSE"          # Novel concept requiring graph expansion
-    UNRESOLVED = "UNRESOLVED"    # Conflicting definition requiring resolution
+    MATCH = "MATCH"
+    PROPOSE = "PROPOSE"
+    UNRESOLVED = "UNRESOLVED"
 
 
 class SourceEvidence(BaseModel):
@@ -110,8 +105,6 @@ class AssimilationExtraction(BaseModel):
     claims: List[ExtractedClaim] = Field(default_factory=list)
     rationale: str = Field(..., description="Reasoning for alignment and conflict detection")
 
-
-# --- Model Tier REST API Request / Response Models ---
 
 class VerifyQuoteRequest(BaseModel):
     source_text: str

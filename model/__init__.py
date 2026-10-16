@@ -1,6 +1,3 @@
-"""
-Project IDEA - Model Tier Package (Gemini 4 Argon Agent & Evidence Validator).
-"""
 from model.schemas import (
     VerificationStatus,
     AlignmentAction,

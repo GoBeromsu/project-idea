@@ -1,12 +1,8 @@
-"""
-Gemini 4 Argon Knowledge Assimilation Agent Loop (Model Tier).
-Implements the 4-stage pipeline: Ingest -> Align -> Assimilate -> Verify.
-Utilizes the Google GenAI Interactions API with previous_interaction_id for self-correction.
-"""
 import os
 import json
 import logging
 from typing import Dict, Any, List, Optional, Union
+from dotenv import load_dotenv
 from google import genai
 
 try:
@@ -17,7 +13,6 @@ try:
         SourceEvidence,
         ChangeSet,
         VerificationStatus,
-        AlignmentAction,
         AssimilationExtraction,
         ExtractResponse,
         CorrectResponse,
@@ -33,7 +28,6 @@ except ImportError:
         SourceEvidence,
         ChangeSet,
         VerificationStatus,
-        AlignmentAction,
         AssimilationExtraction,
         ExtractResponse,
         CorrectResponse,
@@ -61,10 +55,8 @@ Rules:
   - Check if it contradicts any existing verified claim in the Knowledge Graph. If it contradicts, flag status as "UNRESOLVED" and note the conflict in `conflicts_with`.
 - Return valid JSON matching the schema."""
 
-
-from dotenv import load_dotenv
-
 load_dotenv()
+
 
 class AssimilationEngine:
     def __init__(self, api_key: Optional[str] = None):
@@ -73,7 +65,6 @@ class AssimilationEngine:
 
     @staticmethod
     def _extract_thought_summaries(interaction: Any) -> List[str]:
-        """Extracts thought summaries from interaction.steps where step.type == 'thought'."""
         summaries: List[str] = []
         steps = getattr(interaction, "steps", None) or []
         for step in steps:
@@ -87,7 +78,6 @@ class AssimilationEngine:
 
     @staticmethod
     def _parse_extraction(raw_output: str) -> AssimilationExtraction:
-        """Parses structured JSON output using Pydantic v2 model_validate_json with fallback."""
         try:
             return AssimilationExtraction.model_validate_json(raw_output)
         except Exception:
@@ -98,7 +88,6 @@ class AssimilationEngine:
         extraction: AssimilationExtraction,
         source_text: str,
     ) -> List[Dict[str, Any]]:
-        """Runs deterministic mechanical quote validation over extracted claims."""
         validation_failures: List[Dict[str, Any]] = []
         for claim in extraction.claims:
             quote = claim.evidence.exact_quote if claim.evidence else ""
@@ -117,9 +106,6 @@ class AssimilationEngine:
         seed_ontology: Dict[str, Any],
         existing_claims: Optional[List[Union[FactClaim, Dict[str, Any]]]] = None,
     ) -> ExtractResponse:
-        """
-        Turn 1: Runs Gemini 4 Argon extraction via Interactions API and performs mechanical quote verification.
-        """
         existing_claims = existing_claims or []
         source_text = doc_data["full_text"]
         title = doc_data.get("title", "Untitled Document")
@@ -196,10 +182,6 @@ Flag any contradictions with Existing Verified Claims as UNRESOLVED.
         source_text: str,
         validation_failures: List[Dict[str, Any]],
     ) -> CorrectResponse:
-        """
-        Turn 2: Stateful self-correction via previous_interaction_id when mechanical quote validation fails.
-        Re-specifies interaction-scoped parameters (system_instruction, generation_config, response_format).
-        """
         logger.warning(
             f"Mechanical validation failed for {len(validation_failures)} quotes. "
             f"Triggering Argon self-correction on interaction {previous_interaction_id}."
@@ -245,9 +227,6 @@ Ensure that EVERY `exact_quote` in `claims` is an EXACT verbatim substring from 
         doc_data: Dict[str, Any],
         extraction: Union[AssimilationExtraction, Dict[str, Any]],
     ) -> ChangeSet:
-        """
-        Constructs a staged ChangeSet from a validated AssimilationExtraction and source doc_data.
-        """
         if isinstance(extraction, dict):
             extraction = AssimilationExtraction.model_validate(extraction)
 
@@ -354,9 +333,6 @@ Ensure that EVERY `exact_quote` in `claims` is an EXACT verbatim substring from 
         seed_ontology: Dict[str, Any],
         existing_claims: Optional[List[FactClaim]] = None,
     ) -> AssimilatePipelineResponse:
-        """
-        Executes full 2-turn assimilation pipeline and returns both the ChangeSet and PipelineTrace.
-        """
         existing_claims = existing_claims or []
         source_text = doc_data["full_text"]
 
@@ -397,7 +373,4 @@ Ensure that EVERY `exact_quote` in `claims` is an EXACT verbatim substring from 
         seed_ontology: Dict[str, Any],
         existing_claims: Optional[List[FactClaim]] = None,
     ) -> ChangeSet:
-        """
-        Executes assimilation and returns the staged ChangeSet (backward-compatible with sync and async callers).
-        """
         return self.assimilate_with_trace(doc_data, seed_ontology, existing_claims).changeset

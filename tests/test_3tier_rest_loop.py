@@ -10,7 +10,6 @@ from model.server import app as model_app, get_engine
 
 
 def _make_mock_interaction(interaction_id: str, payload: dict, thought_text: str):
-    """Helper to construct a mock Gemini 4 Argon Interaction object with thought steps."""
     thought_step = SimpleNamespace(
         type="thought",
         summary=[SimpleNamespace(type="text", text=thought_text)],
@@ -24,13 +23,6 @@ def _make_mock_interaction(interaction_id: str, payload: dict, thought_text: str
 
 
 def test_end_to_end_3tier_multiturn_self_correction_rest_loop():
-    """
-    Tests the complete 3-Tier REST Loop:
-    Backend (`POST /api/assimilate`) -> REST calls via `ModelServiceClient` to Model Tier (`model_app`):
-      1. `POST /api/v1/extract` (Turn 1 returns hallucinated quote -> mechanical validator detects failure)
-      2. `POST /api/v1/correct` (Turn 2 called with `previous_interaction_id` -> returns verbatim quote)
-      3. `POST /api/v1/build-changeset` (Builds ChangeSet with `mechanical_verified=True`)
-    """
     source_text = (
         "The Interactions API in Gemini 4 Argon preserves server-side state via previous_interaction_id "
         "and grants automatic 95% implicit context caching discounts."
@@ -100,7 +92,6 @@ def test_end_to_end_3tier_multiturn_self_correction_rest_loop():
                 "Turn 2: Fixing non-verbatim quote using mechanical validator feedback.",
             )
 
-    # Wire Backend's model_client directly to Model Tier ASGI app over httpx.ASGITransport
     original_model_client = backend_server.model_client
     backend_server.model_client = ModelServiceClient(
         base_url="http://model-tier",
@@ -126,7 +117,6 @@ def test_end_to_end_3tier_multiturn_self_correction_rest_loop():
             assert data["status"] == "success"
             assert data["requires_human_approval"] is True
 
-            # Verify multi-turn pipeline trace
             trace = data["pipeline_trace"]
             assert trace["self_corrected"] is True
             assert trace["initial_failures_count"] == 1
@@ -136,18 +126,15 @@ def test_end_to_end_3tier_multiturn_self_correction_rest_loop():
             assert "Turn 1" in trace["thought_summaries"][0]
             assert "Turn 2" in trace["thought_summaries"][1]
 
-            # Verify that interactions.create was invoked twice (Turn 1 + Turn 2)
             assert len(call_log) == 2
             assert "previous_interaction_id" not in call_log[0]
             assert call_log[1]["previous_interaction_id"] == "int_turn1_001"
 
-            # Verify the resulting ChangeSet has mechanically verified quote
             cs = data["changeset"]
             assert cs["status"] == "PENDING"
             assert len(cs["proposed_claims"]) == 1
             assert cs["proposed_claims"][0]["evidence"]["mechanical_verified"] is True
 
-            # Approve the ChangeSet and verify state update
             cs_id = cs["id"]
             approve_resp = backend_test_client.post(f"/api/changesets/{cs_id}/approve")
             assert approve_resp.status_code == 200
