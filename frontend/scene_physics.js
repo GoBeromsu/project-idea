@@ -726,16 +726,16 @@
                     const glowTex = createGlowTexture(color);
                     let glowSprite = null;
                     if (glowTex) {
-                        const smat = new THREE.SpriteMaterial({ map: glowTex, color: color, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false });
+                        const smat = new THREE.SpriteMaterial({ map: glowTex, color: color, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending, depthWrite: false });
                         glowSprite = new THREE.Sprite(smat);
-                        glowSprite.scale.set(3.2, 3.2, 1);
+                        glowSprite.scale.set(2.6, 2.6, 1);
                         mesh.add(glowSprite);
                     }
                     let wireframe = null;
                     if (item.isProposed) {
-                        const wfMat = new THREE.MeshBasicMaterial({ wireframe: true, color: color, transparent: true, opacity: 0.55 });
+                        const wfMat = new THREE.MeshBasicMaterial({ wireframe: true, color: color, transparent: true, opacity: 0.65 });
                         wireframe = new THREE.Mesh(geo, wfMat);
-                        wireframe.scale.set(1.38, 1.38, 1.38);
+                        wireframe.scale.set(1.5, 1.5, 1.5);
                         mesh.add(wireframe);
                     }
                     this.graphGroup.add(mesh);
@@ -776,7 +776,7 @@
                     const lineMat = new THREE.LineBasicMaterial({
                         color: isProposed ? PALETTE.amber : PALETTE.blue,
                         transparent: true,
-                        opacity: isProposed ? 0.7 : 0.4,
+                        opacity: isProposed ? 0.75 : 0.45,
                         linewidth: isProposed ? 2 : 1
                     });
                     const line = new THREE.Line(lineGeo, lineMat);
@@ -803,7 +803,7 @@
                         const lineMat = new THREE.LineBasicMaterial({
                             color: isProposed ? PALETTE.amber : PALETTE.teal,
                             transparent: true,
-                            opacity: 0.35
+                            opacity: 0.42
                         });
                         const line = new THREE.Line(lineGeo, lineMat);
                         this.graphGroup.add(line);
@@ -829,7 +829,7 @@
                         dashSize: 0.6,
                         gapSize: 0.4,
                         transparent: true,
-                        opacity: 0.55
+                        opacity: 0.6
                     });
                     const threadLine = new THREE.Line(threadGeo, threadMat);
                     threadLine.computeLineDistances();
@@ -850,7 +850,7 @@
                     const threadMat = new THREE.LineBasicMaterial({
                         color: PALETTE.teal,
                         transparent: true,
-                        opacity: 0.22
+                        opacity: 0.25
                     });
                     const threadLine = new THREE.Line(threadGeo, threadMat);
                     this.graphGroup.add(threadLine);
@@ -871,9 +871,11 @@
                 pulseGeo.setAttribute("position", new THREE.BufferAttribute(posArray, 3));
                 const pulseMat = new THREE.PointsMaterial({
                     color: 0x7dd3fc,
-                    size: 0.34,
+                    map: getParticleTexture(),
+                    size: 0.46,
                     transparent: true,
-                    opacity: 0.85,
+                    opacity: 0.9,
+                    depthWrite: false,
                     blending: THREE.AdditiveBlending
                 });
                 this.edgeFlowSystem = new THREE.Points(pulseGeo, pulseMat);
@@ -984,7 +986,7 @@
                 if (oneHopNeighbors.has(id)) {
                     n.mesh.material.opacity = 1.0;
                     n.mesh.scale.set(1.3, 1.3, 1.3);
-                    if (n.glowSprite) n.glowSprite.material.opacity = 0.8;
+                    if (n.glowSprite) n.glowSprite.material.opacity = 0.85;
                 } else {
                     n.mesh.material.opacity = 0.2;
                     n.mesh.scale.set(0.85, 0.85, 0.85);
@@ -1056,7 +1058,7 @@
                     n.mesh.material.opacity = 1.0;
                     n.mesh.material.emissiveIntensity = 0.7;
                     n.mesh.scale.set(1.35, 1.35, 1.35);
-                    if (n.glowSprite) n.glowSprite.material.opacity = 0.8;
+                    if (n.glowSprite) n.glowSprite.material.opacity = 0.85;
                 } else {
                     n.mesh.material.opacity = 0.2;
                     n.mesh.scale.set(0.85, 0.85, 0.85);
@@ -1100,9 +1102,11 @@
                 burstGeo.setAttribute("position", new THREE.BufferAttribute(posArray, 3));
                 const burstMat = new THREE.PointsMaterial({
                     color: PALETTE.teal,
-                    size: 0.45,
+                    map: getParticleTexture(),
+                    size: 0.48,
                     transparent: true,
                     opacity: 0.9,
+                    depthWrite: false,
                     blending: THREE.AdditiveBlending
                 });
                 const pSystem = new THREE.Points(burstGeo, burstMat);
@@ -1194,16 +1198,14 @@
                 const pos = this.bhVortexParticles.geometry.attributes.position.array;
                 for (let i = 0; i < this.bhVortexData.length; i++) {
                     const pd = this.bhVortexData[i];
-                    pd.angle += pd.speedA * spdMult;
-                    pd.r -= pd.speedR * spdMult;
-                    pd.x += 0.02 * spdMult;
-                    if (pd.r < 0.1) {
-                        pd.r = 6.0 + Math.random() * 2.0;
-                        pd.x = (Math.random() - 0.5) * 5.0;
-                    }
-                    pos[i * 3 + 0] = pd.x;
-                    pos[i * 3 + 1] = Math.cos(pd.angle) * pd.r;
-                    pos[i * 3 + 2] = Math.sin(pd.angle) * pd.r;
+                    pd.progress = (pd.progress + pd.speed * spdMult * (delta * 60)) % 1.0;
+                    pd.angle += pd.spin * spdMult * (delta * 60);
+                    const x = -11.0 + pd.progress * 16.0;
+                    const funnelEnvelope = Math.max(0.18, 1.0 - pd.progress * 0.82);
+                    const r = pd.rSpread * funnelEnvelope;
+                    pos[i * 3 + 0] = x;
+                    pos[i * 3 + 1] = Math.cos(pd.angle) * r;
+                    pos[i * 3 + 2] = Math.sin(pd.angle) * r;
                 }
                 this.bhVortexParticles.geometry.attributes.position.needsUpdate = true;
             }
@@ -1211,14 +1213,12 @@
                 const pos = this.whFountainParticles.geometry.attributes.position.array;
                 for (let i = 0; i < this.whFountainData.length; i++) {
                     const fd = this.whFountainData[i];
-                    fd.x += fd.speedX * spdMult;
-                    fd.angle += 0.03 * spdMult;
-                    if (fd.x > 12) {
-                        fd.x = 0;
-                        fd.angle = Math.random() * Math.PI * 2;
-                    }
-                    const r = (fd.x / 12) * 8.0 + fd.rBase;
-                    pos[i * 3 + 0] = fd.x;
+                    fd.progress = (fd.progress + fd.speed * spdMult * (delta * 60)) % 1.0;
+                    fd.angle += fd.spin * spdMult * (delta * 60);
+                    const x = -5.0 + fd.progress * 16.0;
+                    const coneEnvelope = 0.16 + fd.progress * 0.84;
+                    const r = fd.rSpread * coneEnvelope;
+                    pos[i * 3 + 0] = x;
                     pos[i * 3 + 1] = Math.cos(fd.angle) * r;
                     pos[i * 3 + 2] = Math.sin(fd.angle) * r;
                 }
