@@ -91,7 +91,7 @@ flowchart LR
 
 | Scope / Stage | Responsibility | Component / Model | `thinking_level` | Verification Gate |
 | :--- | :--- | :--- | :---: | :--- |
-| **Runtime (Stage 1)** | Source Ingestion, Section Anchor Parsing & Fast Jargon (`TERM`) Candidate Scan | `backend/ingest.py` + `gemini-3.8-flash` (`scan_jargon_flash`) + `gemini-4-argon` | Deterministic + `low`/`medium` | SSRF/private-IP & binary payload blocking (`2 MB` cap), section anchor extraction, domain acronym/jargon separation (`JargonScanResult`) |
+| **Runtime (Stage 1)** | Source Ingestion, Section Anchor Parsing & Fast Jargon (`TERM`) Candidate Scan | `backend/ingest.py` + `gemini-3.8-flash` (`scan_jargon_flash`) + `gemini-4-argon` | Deterministic + `low`/`medium` | SSRF/private-IP (including IPv4-mapped IPv6 & `64:ff9b::/96` NAT64) & binary payload blocking (`2 MB` cap), section anchor extraction, domain acronym/jargon separation (`JargonScanResult`) |
 | **Runtime (Stage 2)** | Canonical Concept (`CONCEPT` / `ENTITY`) Alignment & Relation Extraction | `gemini-4-argon` + `validate_semantic_jargon_alignment` | `medium` | Classifies candidates as `MATCH` / `PROPOSE` / `UNRESOLVED`; blocks cross-domain false-friend collisions (`CROSS_DOMAIN_FALSE_FRIENDS`, e.g., OS `Page Table` vs. `PagedAttention`, CPU `Speculative Execution` vs. `Speculative Decoding`) |
 | **Runtime (Stage 3)** | Claim Evidence Extraction, Mechanical Quote Verification & Turn-2 Self-Correction | `EvidenceValidator` + `gemini-4-argon` (`previous_interaction_id`) | `medium` (Turn 1) $\rightarrow$ `high`/`medium` (Turn 2) | Verbatim normalized substring check, adversarial prompt-injection rejection (`detect_prompt_injection`), & referential integrity check; max 1 stateful repair turn before isolating failures as `Blocked` (`REJECTED`) |
 | **Runtime (Stage 4–5)** | Selective Human Approval (`White Hole`), Canonical Remapping & Same-Session Query (`Query`) | `backend/store.py` (`resolve_canonical_concept`) + `gemini-4-argon` | `medium` | Automatic canonical ID remapping on `MATCH`, server-side quote re-verification on approval, 4-layer graph telemetry (`layer_counts`: `jargon`, `concepts`, `entities`, `wiki`), and grounded follow-up `Query` citations |
@@ -194,7 +194,7 @@ project-idea/
 │   ├── agent_loop.py             # AssimilationEngine (Gemini 4 Argon Interactions API Turn 1 & Turn 2)
 │   └── server.py                 # Model Tier FastAPI service (/api/v1/query, /extract, /verify-quote, /correct)
 ├── scripts/
-│   ├── eval_harness.py           # 5-scenario live Gemini 4 Argon evaluation benchmark (AC-02 to AC-10)
+│   ├── eval_harness.py           # 6-scenario live Gemini 4 Argon + 3.8 Flash evaluation benchmark (AC-02 to AC-10)
 │   ├── verify_argon.py           # Interactions API connectivity & thinking summary smoke test
 │   └── lint_no_comments.py       # AST & tokenizer linter enforcing zero comments/docstrings across Py/JS/HTML
 ├── tests/
@@ -246,8 +246,9 @@ project-idea/
 | **1. Synonym Alignment** | Canonical Concept Resolution (`AC-04`) | Maps *"tree search heuristic"* to `concept_mcts` (`MATCH`) instead of duplicating nodes | ✅ **PASS** |
 | **2. Mechanical Quote Grounding** | Verbatim Substring + Turn-2 Repair (`AC-05` / `AC-06`) | Rejects non-verbatim quotes; Argon repairs quote via `previous_interaction_id` | ✅ **PASS** |
 | **3. Contradiction Gate** | Silent Overwrite Prevention (`AC-04` / `AC-06`) | Conflicting claims are flagged `UNRESOLVED` and held back from automatic Wiki mutation | ✅ **PASS** |
-| **4. SSRF & Unsafe Scheme Guard** | Egress Security Boundary (`AC-03` / `AC-10`) | Blocks `127.0.0.1`, `169.254.169.254`, `localhost`, and `file://` URLs prior to fetch | ✅ **PASS** |
+| **4. SSRF & Unsafe Scheme Guard** | Egress Security Boundary (`AC-03` / `AC-10`) | Blocks `127.0.0.1`, `169.254.169.254`, IPv4-mapped IPv6 (`::ffff:`), NAT64 (`64:ff9b::/96`), `localhost`, and `file://` URLs prior to fetch | ✅ **PASS** |
 | **5. Pre-Query $\rightarrow$ Selective Approval $\rightarrow$ Re-Query** | End-to-End Session Loop (`AC-02` / `AC-07` / `AC-08`) | Pre-query cites seed nodes (`mutated_wiki=False`); post-approval query cites newly approved session nodes (`is_seed=False`) | ✅ **PASS** |
+| **6. 4-Layer Flash Jargon Scan & False-Friend Isolation** | Dual-Model Stage-1 Scan (`AC-04` / `AC-05`) | Verifies `rings_count = 4`, `gemini-3.8-flash` jargon scan, and cross-domain false-friend isolation (`UNRESOLVED` for OS `Page Table` vs. `PagedAttention`) | ✅ **PASS** |
 
 ### Deterministic Test Suite (`tests/`)
 
