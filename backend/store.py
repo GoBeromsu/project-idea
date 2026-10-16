@@ -152,7 +152,10 @@ class KnowledgeStore:
         cs: ChangeSet,
         source_text: Optional[str] = None,
         trace: Optional[Dict[str, Any]] = None,
+        pipeline_trace: Optional[Dict[str, Any]] = None,
     ) -> ChangeSet:
+        if trace is None and pipeline_trace is not None:
+            trace = pipeline_trace
         if isinstance(source_text, dict) and trace is None:
             trace = source_text
             source_text = None

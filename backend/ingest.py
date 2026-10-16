@@ -304,7 +304,7 @@ def extract_jargon_candidates(text: str) -> List[Dict[str, str]]:
     return candidates
 
 
-async def fetch_and_parse_url(url: str, timeout: float = 15.0) -> Dict[str, Any]:
+async def fetch_and_parse_url(url: str, timeout: float = 45.0) -> Dict[str, Any]:
     validated_url = validate_public_url(url)
 
     parsed_initial = urlparse(validated_url)
