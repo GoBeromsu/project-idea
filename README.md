@@ -82,14 +82,17 @@ flowchart LR
     Store -->|"Updated Session Graph & Wiki"| Scene
 ```
 
-### Runtime Stage & Thinking Effort Governance (`AGENTS.md`)
+### Runtime & Subagent Thinking Effort Governance (`AGENTS.md`)
 
-| Stage | Responsibility | Runtime Component / Model | `thinking_level` | Verification Gate |
+| Scope / Stage | Responsibility | Component / Model | `thinking_level` | Verification Gate |
 | :--- | :--- | :--- | :---: | :--- |
-| **Stage 1** | Source Ingestion, Section Anchor Parsing & Jargon (`TERM`) Candidate Identification | `backend/ingest.py` + `gemini-4-argon` | Deterministic + `medium` | SSRF/private-IP & binary payload blocking (`2 MB` cap), section anchor extraction, domain acronym/jargon separation |
-| **Stage 2** | Canonical Concept (`CONCEPT` / `ENTITY`) Alignment & Relation Extraction | `gemini-4-argon` | `medium` | Classifies candidates against seed/session Wiki as `MATCH` (synonym merge), `PROPOSE` (novel concept), or `UNRESOLVED` (ambiguous/conflicting) |
-| **Stage 3** | Claim Evidence Extraction, Mechanical Quote Verification & Turn-2 Self-Correction | `EvidenceValidator` + `gemini-4-argon` (`previous_interaction_id`) | `medium` (Turn 1) $\rightarrow$ `high`/`medium` (Turn 2) | Verbatim normalized substring & referential integrity check; max 1 stateful repair turn before isolating failures as `Blocked` (`REJECTED`) |
-| **Stage 4–5** | Selective Human Approval (`White Hole`) & Same-Session Grounded Query (`Query`) | `backend/store.py` + `gemini-4-argon` | `medium` | Zero silent overwrites before approval; subsequent session queries cite newly assimilated `TERM` / `CONCEPT` / `CLAIM` evidence |
+| **Runtime (Stage 1)** | Source Ingestion, Section Anchor Parsing & Jargon (`TERM`) Candidate Identification | `backend/ingest.py` + `gemini-4-argon` | Deterministic + `medium` | SSRF/private-IP & binary payload blocking (`2 MB` cap), section anchor extraction, domain acronym/jargon separation |
+| **Runtime (Stage 2)** | Canonical Concept (`CONCEPT` / `ENTITY`) Alignment & Relation Extraction | `gemini-4-argon` | `medium` | Classifies candidates against seed/session Wiki as `MATCH` (synonym merge), `PROPOSE` (novel concept), or `UNRESOLVED` (ambiguous/conflicting) |
+| **Runtime (Stage 3)** | Claim Evidence Extraction, Mechanical Quote Verification & Turn-2 Self-Correction | `EvidenceValidator` + `gemini-4-argon` (`previous_interaction_id`) | `medium` (Turn 1) $\rightarrow$ `high`/`medium` (Turn 2) | Verbatim normalized substring & referential integrity check; max 1 stateful repair turn before isolating failures as `Blocked` (`REJECTED`) |
+| **Runtime (Stage 4–5)** | Selective Human Approval (`White Hole`) & Same-Session Grounded Query (`Query`) | `backend/store.py` + `gemini-4-argon` | `medium` | Server-side quote re-verification on approval, dangling-reference prevention, idempotent state transitions, and grounded follow-up `Query` citations |
+| **Dev Subagents (`[T1-A]`)** | WebGL 3D Orbital Physics & Raycast Rendering | `gemini-3.8-flash` (`flash`) | `low` / `medium` | Left Black Hole $\rightarrow$ Center 3-ring rotating orbits (`TERM`/`CONCEPT`/`CLAIM`) $\rightarrow$ Right White Hole & hit-testing |
+| **Dev Subagents (`[T1-B]–[T3]`)** | Frontend UI, Backend Guardrails & Model Loop Implementation | `gemini-4-argon` (`pro` / `inherit`) | `high` | Shared contract compliance, mechanical vs. semantic separation, stage-by-stage pipeline implementation |
+| **Dev Subagents (`[T4]–[T5]`)** | E2E Golden Path Integration & Independent Browser/Deployment Audit | `gemini-4-argon` (`Argon Mid`) | `medium` | Independent verification of `AC-01`–`AC-10`, non-occluding 3D layout, and live Cloud Run audit |
 
 ---
 
