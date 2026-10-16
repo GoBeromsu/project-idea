@@ -1,7 +1,3 @@
-"""
-REST API Client for communicating with the Model Tier (`model/`).
-Enforces strict 3-Tier decoupling: Backend never imports `google.genai` or `model.*`.
-"""
 import os
 from typing import Any, Dict, List, Optional, Tuple
 import httpx
@@ -13,8 +9,6 @@ except ImportError:
 
 
 class ModelServiceClient:
-    """HTTP REST client orchestrating multi-turn knowledge assimilation against the Model Tier."""
-
     def __init__(
         self,
         base_url: Optional[str] = None,
@@ -29,7 +23,6 @@ class ModelServiceClient:
         return httpx.AsyncClient(timeout=self.timeout, transport=self.transport)
 
     async def check_health(self) -> Dict[str, Any]:
-        """Checks the health endpoint of the Model Tier service."""
         async with self._client() as client:
             resp = await client.get(f"{self.base_url}/health")
             resp.raise_for_status()
@@ -41,14 +34,7 @@ class ModelServiceClient:
         seed_ontology: Dict[str, Any],
         existing_claims: List[FactClaim],
     ) -> Tuple[ChangeSet, PipelineTrace]:
-        """
-        Executes the Multi-Turn REST Verification & Self-Correction Loop against the Model Tier:
-        1. POST /api/v1/extract (Turn 1 extraction + mechanical quote verification)
-        2. POST /api/v1/correct (Turn 2 stateful self-correction via previous_interaction_id if validation_failures exist)
-        3. POST /api/v1/build-changeset (Constructs ChangeSet from verified extraction)
-        """
         async with self._client() as client:
-            # Step 1 (REST Turn 1): Initial extraction and mechanical quote verification
             r1 = await client.post(
                 f"{self.base_url}/api/v1/extract",
                 json={
@@ -69,7 +55,6 @@ class ModelServiceClient:
             turn2_id: Optional[str] = None
             self_corrected = False
 
-            # Step 2 (REST Self-Correction Loop): Trigger Turn 2 if mechanical verification found quote errors
             if validation_failures:
                 r2 = await client.post(
                     f"{self.base_url}/api/v1/correct",
@@ -87,7 +72,6 @@ class ModelServiceClient:
                 thought_summaries.extend(resp2.get("thought_summaries", []))
                 self_corrected = True
 
-            # Step 3 (Build ChangeSet via REST)
             r3 = await client.post(
                 f"{self.base_url}/api/v1/build-changeset",
                 json={

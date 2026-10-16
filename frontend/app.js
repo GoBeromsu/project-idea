@@ -9,7 +9,6 @@ let nodes = [];
 let lines = [];
 let currentChangeSetId = null;
 
-// Initialize 3D Scene
 function init3D() {
     const container = document.getElementById("canvas-container");
     scene = new THREE.Scene();
@@ -28,7 +27,6 @@ function init3D() {
     controls.dampingFactor = 0.05;
     controls.maxPolarAngle = Math.PI / 2 + 0.1;
 
-    // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
@@ -36,10 +34,8 @@ function init3D() {
     dirLight.position.set(20, 40, 20);
     scene.add(dirLight);
 
-    // Create 4 Layer Planes
     createLayerPlanes();
 
-    // Raycaster for click interaction
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
@@ -60,7 +56,6 @@ function init3D() {
 }
 
 function createLayerPlanes() {
-    // 4 Layers: Y = 12 (Wiki), Y = 4 (Graph), Y = -4 (Domain), Y = -12 (Source)
     const layers = [
         { y: 12, color: 0x38bdf8, name: "Living Wiki" },
         { y: 4, color: 0x34d399, name: "Knowledge Graph" },
@@ -85,7 +80,6 @@ function animate() {
     requestAnimationFrame(animate);
     controls.update();
 
-    // Gentle node floating / rotation
     nodes.forEach(n => {
         n.mesh.rotation.y += 0.01;
     });
@@ -93,7 +87,6 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// Fetch and render state from Backend REST API
 async function fetchState() {
     try {
         const res = await fetch(`${API_BASE}/api/state`);
@@ -116,7 +109,6 @@ async function fetchState() {
 }
 
 function renderGraph(state) {
-    // Clear old objects
     nodes.forEach(n => scene.remove(n.mesh));
     lines.forEach(l => scene.remove(l));
     nodes = [];
@@ -125,7 +117,6 @@ function renderGraph(state) {
     const concepts = state.concepts || [];
     const claims = state.claims || [];
 
-    // Concept positioning
     concepts.forEach((c, i) => {
         const angle = (i / Math.max(1, concepts.length)) * Math.PI * 2;
         const radius = 9;
@@ -149,7 +140,6 @@ function renderGraph(state) {
         nodes.push({ mesh, data: c });
     });
 
-    // Claims positioning on Wiki layer (Y = 12)
     claims.forEach((cl, i) => {
         const angle = (i / Math.max(1, claims.length)) * Math.PI * 2 + 0.5;
         const radius = 7;
@@ -168,7 +158,6 @@ function renderGraph(state) {
 
         nodes.push({ mesh, data: { ...cl, layer: "wiki", name: cl.statement, description: cl.statement } });
 
-        // Connect claim to its concept with laser line
         const parentConcept = concepts.find(c => c.id === cl.concept_id);
         if (parentConcept) {
             const pNode = nodes.find(n => n.data.id === parentConcept.id);
@@ -356,7 +345,6 @@ function renderChangeSet(cs, pipelineTrace = null) {
         </div>
     `;
 
-    // Proposed Concepts
     if (cs.proposed_concepts && cs.proposed_concepts.length > 0) {
         html += `<div class="space-y-1.5"><span class="text-[11px] font-semibold text-slate-400 uppercase">Aligned Concepts</span>`;
         cs.proposed_concepts.forEach(c => {
@@ -374,7 +362,6 @@ function renderChangeSet(cs, pipelineTrace = null) {
         html += `</div>`;
     }
 
-    // Proposed Claims
     if (cs.proposed_claims && cs.proposed_claims.length > 0) {
         html += `<div class="space-y-1.5"><span class="text-[11px] font-semibold text-slate-400 uppercase">Proposed Living Wiki Claims</span>`;
         cs.proposed_claims.forEach(cl => {
@@ -390,7 +377,6 @@ function renderChangeSet(cs, pipelineTrace = null) {
         html += `</div>`;
     }
 
-    // Unresolved Conflicts
     if (cs.unresolved_conflicts && cs.unresolved_conflicts.length > 0) {
         html += `<div class="space-y-1.5"><span class="text-[11px] font-semibold text-rose-400 uppercase"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Contradictions (Unresolved)</span>`;
         cs.unresolved_conflicts.forEach(cl => {
@@ -411,7 +397,7 @@ async function approveCurrentChangeSet() {
     if (!currentChangeSetId) return;
     try {
         const res = await fetch(`${API_BASE}/api/changesets/${currentChangeSetId}/approve`, { method: "POST" });
-        const data = await res.json();
+        await res.json();
         alert("ChangeSet Approved! Concepts and Living Wiki updated.");
         document.getElementById("diff-actions").classList.add("hidden");
         document.getElementById("diff-content").innerHTML = `
@@ -460,7 +446,6 @@ async function resetState() {
     }
 }
 
-// Initial Bootstrap
 window.addEventListener("DOMContentLoaded", () => {
     const label = document.getElementById("api-target-label");
     if (label) {

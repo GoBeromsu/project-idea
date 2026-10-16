@@ -1,7 +1,3 @@
-"""
-Knowledge Store for Project IDEA Backend Tier.
-Maintains canonical concepts, relations, living wiki claims, pending ChangeSets, and pipeline traces.
-"""
 import json
 import os
 from pathlib import Path
@@ -71,18 +67,15 @@ class KnowledgeStore:
             return None
         cs.status = "APPROVED"
 
-        # Assimilate concepts into graph
         for c in cs.proposed_concepts:
             c.status = VerificationStatus.VERIFIED
             c.layer = "graph"
             self.concepts[c.id] = c
 
-        # Assimilate relations
         for r in cs.proposed_relations:
             r.status = VerificationStatus.VERIFIED
             self.relations[r.id] = r
 
-        # Assimilate proposed claims (only verified/proposed claims; unresolved conflicts remain in cs.unresolved_conflicts)
         for cl in cs.proposed_claims:
             cl.status = VerificationStatus.VERIFIED
             self.claims[cl.id] = cl

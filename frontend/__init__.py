@@ -1,1 +1,1 @@
-"""Frontend Tier package for Project IDEA."""
+__all__ = []

@@ -1,8 +1,3 @@
-"""
-Project IDEA - Backend Tier REST API Server.
-Orchestrates document ingestion, knowledge state management, human-in-the-loop ChangeSet review,
-and REST-based communication with the Model Tier (`model_client.py`).
-"""
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,7 +30,6 @@ app.add_middleware(
 store = KnowledgeStore()
 model_client = ModelServiceClient()
 
-# Resolve frontend directory for single-port convenience deployment (e.g. Cloud Run)
 ROOT_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = ROOT_DIR / "frontend"
 STATIC_FALLBACK_DIR = ROOT_DIR / "static"
@@ -75,7 +69,6 @@ async def assimilate_document(req: AssimilateRequest):
     seed_ontology = {"concepts": state["concepts"]}
     existing_claims = list(store.claims.values())
 
-    # Execute Gemini 4 Argon assimilation via Model Tier REST API loop
     changeset, trace = await model_client.assimilate_via_rest_loop(
         doc_data=doc_data,
         seed_ontology=seed_ontology,

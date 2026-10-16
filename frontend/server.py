@@ -1,8 +1,3 @@
-"""
-Standalone FastAPI Server for Project IDEA — Frontend Tier (Tier 1).
-Serves the 3D Three.js Visualizer SPA and configures REST API communication
-with the Backend Tier (`BACKEND_API_URL`, default `http://localhost:8000`).
-"""
 import json
 import os
 from pathlib import Path

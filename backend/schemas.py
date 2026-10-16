@@ -1,23 +1,19 @@
-"""
-Backend Tier Pydantic v2 Schemas for Project IDEA.
-Strictly decoupled from the Model Tier (`google.genai` is never imported here).
-"""
 from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
 class VerificationStatus(str, Enum):
-    VERIFIED = "VERIFIED"        # Verified against domain and exact source evidence
-    PROPOSED = "PROPOSED"        # Novel concept or relation, waiting for user review
-    UNRESOLVED = "UNRESOLVED"    # Contradiction or ambiguity detected, requires human decision
-    REJECTED = "REJECTED"        # Disproven or explicitly rejected by user
+    VERIFIED = "VERIFIED"
+    PROPOSED = "PROPOSED"
+    UNRESOLVED = "UNRESOLVED"
+    REJECTED = "REJECTED"
 
 
 class AlignmentAction(str, Enum):
-    MATCH = "MATCH"              # Maps to canonical concept in seed ontology
-    PROPOSE = "PROPOSE"          # Novel concept requiring graph expansion
-    UNRESOLVED = "UNRESOLVED"    # Conflicting definition requiring resolution
+    MATCH = "MATCH"
+    PROPOSE = "PROPOSE"
+    UNRESOLVED = "UNRESOLVED"
 
 
 class SourceEvidence(BaseModel):
