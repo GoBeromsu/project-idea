@@ -7,6 +7,7 @@ class _AwaitableModelMixin:
     def __await__(self):
         async def _coro():
             return self
+
         return _coro().__await__()
 
 
@@ -72,7 +73,9 @@ class FactClaim(BaseModel):
     conditions: Optional[str] = Field(None, description="Conditions or experimental scope for the claim")
     status: VerificationStatus = Field(VerificationStatus.PROPOSED)
     evidence: SourceEvidence
-    conflicts_with: Optional[List[str]] = Field(default_factory=list, description="IDs of contradicting existing claims")
+    conflicts_with: Optional[List[str]] = Field(
+        default_factory=list, description="IDs of contradicting existing claims"
+    )
     conflict_reason: Optional[str] = Field(None, description="Reason for conflict or unresolved status")
     semantic_review_note: Optional[str] = Field(None, description="Argon semantic review note")
     verification_badges: List[str] = Field(default_factory=list)

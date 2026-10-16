@@ -119,6 +119,7 @@ IDEA                                  Session only · execution status
 | [3d-force-graph](https://github.com/vasturiano/3d-force-graph) · [focus](https://vasturiano.github.io/3d-force-graph/example/click-to-focus/) · [particles](https://vasturiano.github.io/3d-force-graph/example/emit-particles/) | 노드 포커스와 실제 이벤트에 연결할 관계 흐름 | 범용 중앙 구형 force graph를 최종 구도로 대체 |
 | [Three.js OrbitControls](https://threejs.org/docs/pages/OrbitControls.html) · [Raycaster](https://threejs.org/docs/pages/Raycaster.html) | 제한된 카메라 탐색과 노드 선택 | 특정 라이브러리/API를 제품 요구사항으로 고정 |
 | [Bruno Simon — WebGL Black Hole](https://webgl-black-hole.vercel.app/) · [source](https://github.com/brunosimon/webgl-black-hole) | 포털의 링·코어·흡입 분위기 | 고비용 셰이더를 핵심 기능보다 먼저 구현 |
+| [Career Hacker Alex — Second Brain (`/memory`)](https://www.careerhackeralex.com/memory) | 따뜻한 에디토리얼 오프화이트/아이보리 톤(`#F4F3EE` / `#F7F9FC` 조화), 차콜 잉크(`#141413` / `#202124`), 섬세한 `1px` 헤어라인 보더(`#E5E3DC` / `#DADCE0`), 알약형(`rounded-full`) 플로팅 프롬프트·필터, 대문자 트래킹 레이블(`0.12em`), 3계층 지식 구조(`Topics/Terms · Thoughts/Concepts · Theses/Claims`) 감성 | IDEA의 필수 좌우 포털(`Black Hole` → 3중 회전 궤도 → `White Hole`)과 Google 4색 시맨틱 구분을 제거하거나 단순 2D/단일 성좌 뷰로 축소 |
 참고 구현의 코드를 복사할 때는 해당 라이선스와 표시 조건을 확인한다. 위 정적 시안의 화면 배치가 본문의 요구와 다르면 **이 문서의 좌우 구도·카드 비차폐·여러 회전 계층 조건이 우선**한다.
 ## Do's and Don'ts
 | Do | Don't |

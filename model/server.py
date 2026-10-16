@@ -7,29 +7,33 @@ from fastapi.middleware.cors import CORSMiddleware
 
 try:
     from model.schemas import (
-        VerifyQuoteRequest,
-        VerifyQuoteResponse,
-        ExtractRequest,
-        ExtractResponse,
-        CorrectRequest,
-        CorrectResponse,
+        AssimilatePipelineResponse,
         BuildChangeSetRequest,
         ChangeSet,
-        AssimilatePipelineResponse,
+        CorrectRequest,
+        CorrectResponse,
+        ExtractRequest,
+        ExtractResponse,
+        ModelQueryRequest,
+        ModelQueryResponse,
+        VerifyQuoteRequest,
+        VerifyQuoteResponse,
     )
     from model.validator import EvidenceValidator
     from model.agent_loop import AssimilationEngine
 except ImportError:
     from schemas import (
-        VerifyQuoteRequest,
-        VerifyQuoteResponse,
-        ExtractRequest,
-        ExtractResponse,
-        CorrectRequest,
-        CorrectResponse,
+        AssimilatePipelineResponse,
         BuildChangeSetRequest,
         ChangeSet,
-        AssimilatePipelineResponse,
+        CorrectRequest,
+        CorrectResponse,
+        ExtractRequest,
+        ExtractResponse,
+        ModelQueryRequest,
+        ModelQueryResponse,
+        VerifyQuoteRequest,
+        VerifyQuoteResponse,
     )
     from validator import EvidenceValidator
     from agent_loop import AssimilationEngine
@@ -85,6 +89,7 @@ def extract_endpoint(req: ExtractRequest) -> ExtractResponse:
         doc_data=req.doc_data,
         seed_ontology=req.seed_ontology,
         existing_claims=req.existing_claims,
+        question=req.question,
     )
 
 
@@ -95,6 +100,7 @@ def correct_endpoint(req: CorrectRequest) -> CorrectResponse:
         previous_interaction_id=req.previous_interaction_id,
         source_text=req.source_text,
         validation_failures=req.validation_failures,
+        question=req.question,
     )
 
 
@@ -106,6 +112,8 @@ def build_changeset_endpoint(req: BuildChangeSetRequest) -> ChangeSet:
     return engine.build_changeset(
         doc_data=req.doc_data,
         extraction=req.extraction,
+        question=req.question,
+        seed_ontology=req.seed_ontology,
     )
 
 
@@ -116,6 +124,17 @@ def assimilate_endpoint(req: ExtractRequest) -> AssimilatePipelineResponse:
     engine = get_engine()
     return engine.assimilate_with_trace(
         doc_data=req.doc_data,
+        seed_ontology=req.seed_ontology,
+        existing_claims=req.existing_claims,
+        question=req.question,
+    )
+
+
+@app.post("/api/v1/query", response_model=ModelQueryResponse)
+def query_endpoint(req: ModelQueryRequest) -> ModelQueryResponse:
+    engine = get_engine()
+    return engine.answer_query(
+        question=req.question,
         seed_ontology=req.seed_ontology,
         existing_claims=req.existing_claims,
     )

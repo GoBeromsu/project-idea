@@ -30,6 +30,17 @@ Argon의 역할은 해석·제안·수정이다. 외부 자료는 데이터이�
 실제 원문의 인용 존재 검사, 의미 검토, 사용자 승인을 분리한다. 인용 위치가 맞거나 사용자가 승인했다고 객관적 사실이 증명된 것으로 표시하지 않는다. 일반 질의는 지식을 변경하지 않고, 새 자료도 승인 전에 기존 Wiki를 덮어쓰지 않는다.
 기계적 검사 실패는 변경 적용을 차단한다. 실패 이유를 전달해 제한적으로 수정하고 같은 검사를 다시 수행한다. 모델에 검사 기준을 낮추거나 무한 반복할 권한을 주지 않는다. 미확인 주장은 보류한다.
 현재 범위는 로그인·영속 DB 없이 동작한다. 공개 자료만 받고, 모델 키는 서버에 둔다. 입력 URL·리다이렉트·실행 한도와 안전한 텍스트 렌더링을 검증한다. 브라우저의 기존 지식을 신뢰된 서버 증거로 취급하지 않는다.
+## Model & Thinking Effort Governance
+개발 Subagent와 서비스 런타임 파이프라인 모두 작업 복잡도·검증 중요도에 따라 모델과 추론 강도(`thinking_level`)를 명시적으로 배정한다.
+| 구분 | 단계 / 역할 | 모델 (`Model`) | 추론 강도 (`thinking_level`) | 책임 및 검증 게이트 |
+|---|---|---|---|---|
+| **Runtime (Stage 1)** | 원문 수집·앵커 파싱 & Jargon(`TERM`) 후보 식별 | `backend/ingest.py` + `gemini-4-argon` | Deterministic + `medium` | SSRF/바이너리 차단, 섹션 앵커 추출, 도메인 약어·용어 후보 분리 |
+| **Runtime (Stage 2)** | Concept(`CONCEPT`/`ENTITY`) 의미 정렬 & 관계 추출 | `gemini-4-argon` | `medium` | 기존 Wiki 시드/세션 개념과 `MATCH`(동의어 병합) / `PROPOSE`(신규) / `UNRESOLVED`(모호·충돌) 분류 |
+| **Runtime (Stage 3)** | Claim 근거 추출·기계적 인용 검증 & Turn-2 자기교정 | Mechanical Validator + `gemini-4-argon` (`previous_interaction_id`) | `medium` (Turn 1) → `high`/`medium` (Turn 2 교정) | 원문 verbatim 인용·참조 무결성 기계 검사, 실패 시 최대 1회 자기교정 후 미통과 항목 `Blocked`(`REJECTED`) 격리 |
+| **Runtime (Stage 4–5)** | 선택적 승인 Wiki 편입(`White Hole`) & 누적 지식 재질의(`Query`) | `backend/store.py` + `gemini-4-argon` | `medium` | 승인 전 자동 덮어쓰기 금지, 승인 후 동일 세션 후속 질의에서 편입된 `TERM`/`CONCEPT`/`CLAIM` 근거 인용 |
+| **Dev Subagents** | WebGL 3D 물리·궤도 렌더링 (`[T1-A]`), 정형 검사 | `gemini-3.8-flash` (`Argon Low` / `flash`) | `low` / `medium` | 좌측 Black Hole → 중앙 3중 회전 궤도(`TERM`/`CONCEPT`/`CLAIM`) → 우측 White Hole 렌더링 및 히트 테스트 |
+| **Dev Subagents (Implementation)** | 프론트 UI·백엔드 게이트·모델 루프 구현 (`[T1-B]`, `[T2]`, `[T3]`) | `gemini-4-argon` (`pro` / `inherit`) | `high` | 공유 계약 준수, 기계적/의미적 검증 분리, 스테이지별 파이프라인 구현 |
+| **Dev Subagents (Final Issue Verification)** | 이슈별 통합 테스트·E2E Golden Path·독립 브라우저 및 배포 감사 (`[T4]`, `[T5]`) | `gemini-4-argon` (`Argon Mid`) | `medium` | 각 GitHub 이슈(`#11`–`#17`)의 DoD/AC 충족 여부, 기계적 검증 차단, 3D 비차폐 레이아웃 및 실제 배포 환경 최종 감사 |
 ## Development verification loop
 **AC 확인 → 구현 → 해당 검사 실행 → 별도 리뷰 → 실패 시 동일 이슈에서 수정 → 재검사 → 통합 상태 확인 → Done**
 구현 에이전트는 자기 변경의 테스트 결과를 첨부해 Review로 넘긴다. 검증 담당은 PR 설명만 읽지 말고 해당 변경과 실제 검사 결과를 확인한다. 화면 변경은 브라우저에서 직접 확인한다. 구현자가 유일한 검증자인 경우에는 독립 리뷰라고 보고하지 않는다.

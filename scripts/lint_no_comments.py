@@ -51,9 +51,7 @@ def check_python_source(source: str, path: Path) -> List[Tuple[Path, int, int, s
                     col = getattr(first_stmt, "col_offset", 0) + 1
                     first_line = first_stmt.value.value.strip().splitlines()
                     preview = first_line[0] if first_line else ""
-                    violations.append(
-                        (path, line, col, f"Python docstring prohibited: {preview[:60]}")
-                    )
+                    violations.append((path, line, col, f"Python docstring prohibited: {preview[:60]}"))
 
     violations.sort(key=lambda item: (item[1], item[2]))
     return violations
@@ -97,9 +95,7 @@ def check_js_source(
                 start_line, start_col = line, col
                 end_idx = source.find("\n", i)
                 snippet = source[i : end_idx if end_idx != -1 else n].strip()
-                violations.append(
-                    (path, start_line, start_col, f"JS line comment prohibited: {snippet[:60]}")
-                )
+                violations.append((path, start_line, start_col, f"JS line comment prohibited: {snippet[:60]}"))
                 if end_idx == -1:
                     break
                 advance(end_idx - i + 1)
@@ -112,9 +108,7 @@ def check_js_source(
                 raw = source[i : (end_idx + 2) if end_idx != -1 else n]
                 first_line = raw.strip().splitlines()
                 preview = first_line[0] if first_line else "/* */"
-                violations.append(
-                    (path, start_line, start_col, f"JS block comment prohibited: {preview[:60]}")
-                )
+                violations.append((path, start_line, start_col, f"JS block comment prohibited: {preview[:60]}"))
                 if end_idx == -1:
                     break
                 advance(end_idx + 2 - i)

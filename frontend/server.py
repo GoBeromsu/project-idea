@@ -42,6 +42,15 @@ def serve_app_js():
     )
 
 
+@app.get("/scene_physics.js")
+@app.get("/static/scene_physics.js")
+def serve_scene_physics_js():
+    return FileResponse(
+        FRONTEND_DIR / "scene_physics.js",
+        media_type="application/javascript",
+    )
+
+
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend-static")
 
 

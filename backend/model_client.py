@@ -3,9 +3,9 @@ from typing import Any, Dict, List, Optional, Tuple
 import httpx
 
 try:
-    from backend.schemas import ChangeSet, FactClaim, PipelineTrace
+    from backend.schemas import ChangeSet, FactClaim, PipelineTrace, QueryResponse
 except ImportError:
-    from schemas import ChangeSet, FactClaim, PipelineTrace
+    from schemas import ChangeSet, FactClaim, PipelineTrace, QueryResponse
 
 
 class ModelServiceClient:
@@ -28,72 +28,158 @@ class ModelServiceClient:
             resp.raise_for_status()
             return resp.json()
 
-    async def assimilate_via_rest_loop(
+    async def extract_turn1(
         self,
         doc_data: Dict[str, Any],
         seed_ontology: Dict[str, Any],
         existing_claims: List[FactClaim],
-    ) -> Tuple[ChangeSet, PipelineTrace]:
+        question: Optional[str] = None,
+    ) -> Dict[str, Any]:
         async with self._client() as client:
             r1 = await client.post(
                 f"{self.base_url}/api/v1/extract",
                 json={
                     "doc_data": doc_data,
                     "seed_ontology": seed_ontology,
-                    "existing_claims": [c.model_dump() for c in existing_claims],
+                    "existing_claims": [c.model_dump() if hasattr(c, "model_dump") else c for c in existing_claims],
+                    "question": question,
                 },
             )
             r1.raise_for_status()
-            resp1 = r1.json()
+            return r1.json()
 
-            turn1_id: str = resp1["interaction_id"]
-            extraction: Dict[str, Any] = resp1["extraction"]
-            thought_summaries: List[str] = list(resp1.get("thought_summaries", []))
-            validation_failures: List[Dict[str, Any]] = resp1.get("validation_failures", [])
+    async def correct_turn2(
+        self,
+        previous_interaction_id: str,
+        source_text: str,
+        validation_failures: List[Dict[str, Any]],
+        question: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        async with self._client() as client:
+            r2 = await client.post(
+                f"{self.base_url}/api/v1/correct",
+                json={
+                    "previous_interaction_id": previous_interaction_id,
+                    "source_text": source_text,
+                    "validation_failures": validation_failures,
+                    "question": question,
+                },
+            )
+            r2.raise_for_status()
+            return r2.json()
 
-            initial_failures_count = len(validation_failures)
-            turn2_id: Optional[str] = None
-            self_corrected = False
-
-            if validation_failures:
-                r2 = await client.post(
-                    f"{self.base_url}/api/v1/correct",
-                    json={
-                        "previous_interaction_id": turn1_id,
-                        "source_text": doc_data["full_text"],
-                        "validation_failures": validation_failures,
-                    },
-                )
-                r2.raise_for_status()
-                resp2 = r2.json()
-
-                extraction = resp2["extraction"]
-                turn2_id = resp2.get("interaction_id")
-                thought_summaries.extend(resp2.get("thought_summaries", []))
-                self_corrected = True
-
+    async def build_changeset(
+        self,
+        doc_data: Dict[str, Any],
+        extraction: Dict[str, Any],
+        question: Optional[str] = None,
+        seed_ontology: Optional[Dict[str, Any]] = None,
+    ) -> ChangeSet:
+        async with self._client() as client:
             r3 = await client.post(
                 f"{self.base_url}/api/v1/build-changeset",
                 json={
                     "doc_data": doc_data,
                     "extraction": extraction,
+                    "question": question,
+                    "seed_ontology": seed_ontology,
                 },
             )
             r3.raise_for_status()
             resp3 = r3.json()
-
             cs_json = (
                 resp3["changeset"]
                 if isinstance(resp3, dict) and "changeset" in resp3 and isinstance(resp3["changeset"], dict)
                 else resp3
             )
+            return ChangeSet(**cs_json)
 
-            changeset = ChangeSet(**cs_json)
-            trace = PipelineTrace(
-                turn1_interaction_id=turn1_id,
-                turn2_interaction_id=turn2_id,
-                self_corrected=self_corrected,
-                initial_failures_count=initial_failures_count,
-                thought_summaries=thought_summaries,
+    async def run_assimilation_pipeline(
+        self,
+        doc_data: Dict[str, Any],
+        seed_ontology: Dict[str, Any],
+        existing_claims: List[FactClaim],
+        question: Optional[str] = None,
+    ) -> Tuple[ChangeSet, PipelineTrace]:
+        resp1 = await self.extract_turn1(
+            doc_data=doc_data,
+            seed_ontology=seed_ontology,
+            existing_claims=existing_claims,
+            question=question,
+        )
+
+        turn1_id: str = resp1["interaction_id"]
+        extraction: Dict[str, Any] = resp1["extraction"]
+        thought_summaries: List[str] = list(resp1.get("thought_summaries", []))
+        validation_failures: List[Dict[str, Any]] = resp1.get("validation_failures", [])
+
+        initial_failures_count = len(validation_failures)
+        remaining_failures_count = initial_failures_count
+        turn2_id: Optional[str] = None
+        self_corrected = False
+
+        if validation_failures:
+            resp2 = await self.correct_turn2(
+                previous_interaction_id=turn1_id,
+                source_text=doc_data["full_text"],
+                validation_failures=validation_failures,
+                question=question,
             )
-            return changeset, trace
+            extraction = resp2["extraction"]
+            turn2_id = resp2.get("interaction_id")
+            thought_summaries.extend(resp2.get("thought_summaries", []))
+            remaining_failures_count = len(resp2.get("validation_failures", []))
+            self_corrected = True
+
+        changeset = await self.build_changeset(
+            doc_data=doc_data,
+            extraction=extraction,
+            question=question,
+            seed_ontology=seed_ontology,
+        )
+        if question and not changeset.question:
+            changeset.question = question
+        if isinstance(extraction, dict) and extraction.get("answer") and not changeset.answer:
+            changeset.answer = extraction.get("answer")
+
+        trace = PipelineTrace(
+            turn1_interaction_id=turn1_id,
+            turn2_interaction_id=turn2_id,
+            self_corrected=self_corrected,
+            initial_failures_count=initial_failures_count,
+            remaining_failures_count=remaining_failures_count,
+            thought_summaries=thought_summaries,
+        )
+        return changeset, trace
+
+    async def assimilate_via_rest_loop(
+        self,
+        doc_data: Dict[str, Any],
+        seed_ontology: Dict[str, Any],
+        existing_claims: List[FactClaim],
+        question: Optional[str] = None,
+    ) -> Tuple[ChangeSet, PipelineTrace]:
+        return await self.run_assimilation_pipeline(
+            doc_data=doc_data,
+            seed_ontology=seed_ontology,
+            existing_claims=existing_claims,
+            question=question,
+        )
+
+    async def query_knowledge(
+        self,
+        question: str,
+        seed_ontology: Dict[str, Any],
+        existing_claims: List[FactClaim],
+    ) -> QueryResponse:
+        async with self._client() as client:
+            resp = await client.post(
+                f"{self.base_url}/api/v1/query",
+                json={
+                    "question": question,
+                    "seed_ontology": seed_ontology,
+                    "existing_claims": [c.model_dump() if hasattr(c, "model_dump") else c for c in existing_claims],
+                },
+            )
+            resp.raise_for_status()
+            return QueryResponse(**resp.json())
