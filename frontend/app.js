@@ -7,15 +7,15 @@ const API_BASE = (
 const URL_EXTRACTOR = new RegExp("https?://\\S+", "i");
 
 const CANONICAL_STAGES = {
-    "Idle / Explore": { color: "#4285F4", bg: "#F8FAFD", border: "#DADCE0", pulse: false, sub: "Orbits active" },
-    "Query": { color: "#4285F4", bg: "#E8F0FE", border: "#4285F4", pulse: true, sub: "Searching session library" },
-    "Ingest": { color: "#4285F4", bg: "#E8F0FE", border: "#4285F4", pulse: true, sub: "Fetching source document" },
-    "Align": { color: "#EA4335", bg: "#FCE8E6", border: "#EA4335", pulse: true, sub: "Aligning terms & concepts" },
-    "Verify / Repair": { color: "#FBBC05", bg: "#FEF7E0", border: "#FBBC05", pulse: true, sub: "Checking verbatim quotes" },
-    "Review": { color: "#FBBC05", bg: "#FEF7E0", border: "#FBBC05", pulse: false, sub: "Orbits paused · Review diff" },
-    "Apply": { color: "#34A853", bg: "#E6F4EA", border: "#34A853", pulse: true, sub: "Committing to session Wiki" },
-    "Complete": { color: "#34A853", bg: "#E6F4EA", border: "#34A853", pulse: false, sub: "Assimilated into Wiki" },
-    "Unresolved / Error": { color: "#EA4335", bg: "#FCE8E6", border: "#EA4335", pulse: false, sub: "Existing library preserved" }
+    "Idle / Explore": { color: "#38BDF8", bg: "rgba(15, 23, 42, 0.85)", border: "rgba(56, 189, 248, 0.35)", pulse: false, sub: "Constellation orbits active" },
+    "Query": { color: "#38BDF8", bg: "rgba(14, 116, 144, 0.28)", border: "#38BDF8", pulse: true, sub: "Searching session constellation" },
+    "Ingest": { color: "#60A5FA", bg: "rgba(30, 58, 138, 0.32)", border: "#60A5FA", pulse: true, sub: "Absorbing source into Black Hole" },
+    "Align": { color: "#A78BFA", bg: "rgba(76, 29, 149, 0.32)", border: "#A78BFA", pulse: true, sub: "Aligning terms & semantic concepts" },
+    "Verify / Repair": { color: "#F59E0B", bg: "rgba(120, 53, 15, 0.32)", border: "#F59E0B", pulse: true, sub: "Checking verbatim quotes" },
+    "Review": { color: "#F59E0B", bg: "rgba(120, 53, 15, 0.36)", border: "#F59E0B", pulse: false, sub: "Orbits paused · Review diff" },
+    "Apply": { color: "#2DD4BF", bg: "rgba(19, 78, 74, 0.36)", border: "#2DD4BF", pulse: true, sub: "Synthesizing into White Hole Wiki" },
+    "Complete": { color: "#2DD4BF", bg: "rgba(19, 78, 74, 0.32)", border: "#2DD4BF", pulse: false, sub: "Assimilated into White Hole Wiki" },
+    "Unresolved / Error": { color: "#F43F5E", bg: "rgba(136, 19, 55, 0.35)", border: "#F43F5E", pulse: false, sub: "Existing constellation preserved" }
 };
 
 let sceneManager = null;
@@ -122,8 +122,8 @@ function updateSessionCounters(state) {
     if (wikiCounter) {
         if (totalSessionAdded > 0) {
             wikiCounter.textContent = `Seed + ${totalSessionAdded} added`;
-            wikiCounter.style.backgroundColor = "#E6F4EA";
-            wikiCounter.style.color = "#137333";
+            wikiCounter.style.backgroundColor = "rgba(19, 78, 74, 0.36)";
+            wikiCounter.style.color = "#2DD4BF";
         } else {
             wikiCounter.textContent = `Seed (${concepts.length + claims.length})`;
         }
@@ -233,11 +233,11 @@ function switchOverlayTab(tabName) {
         const view = document.getElementById(`view-${t}`);
         if (btn) {
             if (t === tabName) {
-                btn.style.backgroundColor = "#E8F0FE";
-                btn.style.color = "#1967D2";
+                btn.style.backgroundColor = "rgba(14, 116, 144, 0.28)";
+                btn.style.color = "#38BDF8";
             } else {
                 btn.style.backgroundColor = "transparent";
-                btn.style.color = "#5F6368";
+                btn.style.color = "#94A3B8";
             }
         }
         if (view) {
@@ -390,17 +390,17 @@ function buildVerificationBadges(node) {
     }
 
     const styleMap = {
-        "Seed knowledge": { bg: "#F1F3F4", color: "#5F6368", border: "#DADCE0", icon: "fa-seedling" },
-        "Added to this session": { bg: "#E6F4EA", color: "#137333", border: "#34A853", icon: "fa-circle-plus" },
-        "Source located": { bg: "#E8F0FE", color: "#1967D2", border: "#4285F4", icon: "fa-link" },
-        "Quote matched": { bg: "#E6F4EA", color: "#137333", border: "#34A853", icon: "fa-check-double" },
-        "Model-reviewed": { bg: "#E8F0FE", color: "#1967D2", border: "#4285F4", icon: "fa-microchip" },
-        "Needs review": { bg: "#FEF7E0", color: "#B06000", border: "#FBBC05", icon: "fa-triangle-exclamation" },
-        "Blocked": { bg: "#FCE8E6", color: "#C5221F", border: "#EA4335", icon: "fa-ban" }
+        "Seed knowledge": { bg: "rgba(15, 23, 42, 0.78)", color: "#94A3B8", border: "rgba(148, 163, 184, 0.18)", icon: "fa-seedling" },
+        "Added to this session": { bg: "rgba(19, 78, 74, 0.36)", color: "#2DD4BF", border: "#2DD4BF", icon: "fa-circle-plus" },
+        "Source located": { bg: "rgba(14, 116, 144, 0.28)", color: "#38BDF8", border: "#38BDF8", icon: "fa-link" },
+        "Quote matched": { bg: "rgba(19, 78, 74, 0.36)", color: "#2DD4BF", border: "#2DD4BF", icon: "fa-check-double" },
+        "Model-reviewed": { bg: "rgba(14, 116, 144, 0.28)", color: "#38BDF8", border: "#38BDF8", icon: "fa-microchip" },
+        "Needs review": { bg: "rgba(120, 53, 15, 0.32)", color: "#F59E0B", border: "#F59E0B", icon: "fa-triangle-exclamation" },
+        "Blocked": { bg: "rgba(136, 19, 55, 0.35)", color: "#F43F5E", border: "#F43F5E", icon: "fa-ban" }
     };
 
     rawList.forEach(label => {
-        const s = styleMap[label] || { bg: "#F8FAFD", color: "#5F6368", border: "#DADCE0", icon: "fa-tag" };
+        const s = styleMap[label] || { bg: "rgba(15, 23, 42, 0.78)", color: "#94A3B8", border: "rgba(148, 163, 184, 0.18)", icon: "fa-tag" };
         badges.push(`
             <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border inline-flex items-center space-x-1" style="background:${s.bg}; color:${s.color}; border-color:${s.border};">
                 <i class="fa-solid ${s.icon} text-[9px]"></i>
@@ -453,19 +453,19 @@ function showNodeModal(data) {
     const status = (data.status || "VERIFIED").toUpperCase();
 
     const typePalette = {
-        TERM: { bg: "#FCE8E6", color: "#C5221F", border: "#EA4335", shape: "◆ TERM" },
-        CONCEPT: { bg: "#E6F4EA", color: "#137333", border: "#34A853", shape: "● CONCEPT" },
-        ENTITY: { bg: "#E8F0FE", color: "#1967D2", border: "#4285F4", shape: "■ ENTITY" },
-        CLAIM: { bg: "#E8F0FE", color: "#1967D2", border: "#4285F4", shape: "◎ CLAIM" },
-        PORTAL: { bg: "#18212C", color: "#FFFFFF", border: "#4285F4", shape: "◉ PORTAL" }
+        TERM: { bg: "rgba(136, 19, 55, 0.35)", color: "#F43F5E", border: "#F43F5E", shape: "◆ TERM" },
+        CONCEPT: { bg: "rgba(19, 78, 74, 0.36)", color: "#2DD4BF", border: "#2DD4BF", shape: "● CONCEPT" },
+        ENTITY: { bg: "rgba(14, 116, 144, 0.28)", color: "#38BDF8", border: "#38BDF8", shape: "■ ENTITY" },
+        CLAIM: { bg: "rgba(14, 116, 144, 0.28)", color: "#38BDF8", border: "#38BDF8", shape: "◎ CLAIM" },
+        PORTAL: { bg: "#18212C", color: "rgba(15, 23, 42, 0.78)", border: "#38BDF8", shape: "◉ PORTAL" }
     };
     const tStyle = typePalette[nodeType] || typePalette.CONCEPT;
 
     const statusPalette = {
-        VERIFIED: { bg: "#E6F4EA", color: "#137333", border: "#34A853" },
-        PROPOSED: { bg: "#FEF7E0", color: "#B06000", border: "#FBBC05" },
-        UNRESOLVED: { bg: "#FCE8E6", color: "#C5221F", border: "#EA4335" },
-        REJECTED: { bg: "#F1F3F4", color: "#5F6368", border: "#DADCE0" }
+        VERIFIED: { bg: "rgba(19, 78, 74, 0.36)", color: "#2DD4BF", border: "#2DD4BF" },
+        PROPOSED: { bg: "rgba(120, 53, 15, 0.32)", color: "#F59E0B", border: "#F59E0B" },
+        UNRESOLVED: { bg: "rgba(136, 19, 55, 0.35)", color: "#F43F5E", border: "#F43F5E" },
+        REJECTED: { bg: "rgba(15, 23, 42, 0.78)", color: "#94A3B8", border: "rgba(148, 163, 184, 0.18)" }
     };
     const sStyle = statusPalette[status] || statusPalette.VERIFIED;
 
@@ -473,7 +473,7 @@ function showNodeModal(data) {
     if (badgesRow) {
         let actionBadge = "";
         if (data.action) {
-            actionBadge = `<span class="text-[10px] font-mono-code font-semibold px-2 py-0.5 rounded border" style="background:#F8FAFD; color:#202124; border-color:#DADCE0;">Action: ${escapeHtml(data.action)}</span>`;
+            actionBadge = `<span class="text-[10px] font-mono-code font-semibold px-2 py-0.5 rounded border" style="background:rgba(15, 23, 42, 0.78); color:#F8FAFC; border-color:rgba(148, 163, 184, 0.18);">Action: ${escapeHtml(data.action)}</span>`;
         }
         badgesRow.innerHTML = `
             <span id="modal-layer" class="text-[10px] font-bold px-2 py-0.5 rounded uppercase border" style="background:${tStyle.bg}; color:${tStyle.color}; border-color:${tStyle.border};">${escapeHtml(tStyle.shape)}</span>
@@ -493,7 +493,7 @@ function showNodeModal(data) {
         if (Array.isArray(data.synonyms) && data.synonyms.length > 0) {
             synRow.classList.remove("hidden");
             synRow.innerHTML = data.synonyms.map(syn => `
-                <span class="font-mono-code text-[10px] px-2 py-0.5 rounded border" style="background:#F8FAFD; border-color:#DADCE0; color:#5F6368;">alias: ${escapeHtml(syn)}</span>
+                <span class="font-mono-code text-[10px] px-2 py-0.5 rounded border" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18); color:#94A3B8;">alias: ${escapeHtml(syn)}</span>
             `).join("");
         } else {
             synRow.classList.add("hidden");
@@ -508,12 +508,12 @@ function showNodeModal(data) {
             descEl.innerHTML = `
                 <div class="space-y-2">
                     <p>${escapeHtml(data.description)}</p>
-                    <div class="p-2.5 rounded-xl border space-y-1.5" style="background:#F8FAFD; border-color:#DADCE0;">
-                        <span class="text-[11px] font-semibold block" style="color:#137333;">Synthesized Living Wiki Statements (${verifiedClaims.length})</span>
+                    <div class="p-2.5 rounded-xl border space-y-1.5" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18);">
+                        <span class="text-[11px] font-semibold block" style="color:#2DD4BF;">Synthesized Living Wiki Statements (${verifiedClaims.length})</span>
                         ${verifiedClaims.map(cl => `
-                            <div class="p-2 rounded-lg bg-white border flex items-start justify-between gap-2" style="border-color:#DADCE0;">
+                            <div class="p-2 rounded-lg bg-white border flex items-start justify-between gap-2" style="border-color:rgba(148, 163, 184, 0.18);">
                                 <span class="text-xs">${escapeHtml(cl.statement)}</span>
-                                <button type="button" onclick="inspectNodeById('${escapeHtml(cl.id)}')" class="shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold border" style="background:#E8F0FE; color:#1967D2; border-color:#4285F4;">Inspect</button>
+                                <button type="button" onclick="inspectNodeById('${escapeHtml(cl.id)}')" class="shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold border" style="background:rgba(14, 116, 144, 0.28); color:#38BDF8; border-color:#38BDF8;">Inspect</button>
                             </div>
                         `).join("")}
                     </div>
@@ -529,12 +529,12 @@ function showNodeModal(data) {
             descEl.innerHTML = `
                 <div class="space-y-2">
                     <p>${escapeHtml(data.description)}</p>
-                    <div class="p-2.5 rounded-xl border space-y-1" style="background:#F8FAFD; border-color:#DADCE0;">
-                        <span class="text-[11px] font-semibold block" style="color:#1967D2;">Tracked Source Documents in Session (${allSources.length})</span>
+                    <div class="p-2.5 rounded-xl border space-y-1" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18);">
+                        <span class="text-[11px] font-semibold block" style="color:#38BDF8;">Tracked Source Documents in Session (${allSources.length})</span>
                         ${allSources.slice(0, 5).map(ev => `
                             <div class="text-[11px] flex items-center justify-between py-0.5">
                                 <span class="font-medium">${escapeHtml(ev.title || ev.url || "Source")}</span>
-                                <span class="font-mono-code text-[10px]" style="color:#5F6368;">${escapeHtml(ev.section_anchor || "Full text")}</span>
+                                <span class="font-mono-code text-[10px]" style="color:#94A3B8;">${escapeHtml(ev.section_anchor || "Full text")}</span>
                             </div>
                         `).join("")}
                     </div>
@@ -599,11 +599,11 @@ function showNodeModal(data) {
                 const validUrl = safeHttpUrl(effectiveEvidence.resolved_url || effectiveEvidence.url);
                 const srcTitle = effectiveEvidence.title || effectiveEvidence.url || "Tracked Source";
                 const linkHtml = validUrl
-                    ? `<a href="${escapeHtml(validUrl)}" target="_blank" rel="noopener noreferrer" class="font-semibold underline hover:text-blue-700" style="color:#1967D2;"><i class="fa-solid fa-arrow-up-right-from-square text-[10px] mr-1"></i>${escapeHtml(srcTitle)}</a>`
+                    ? `<a href="${escapeHtml(validUrl)}" target="_blank" rel="noopener noreferrer" class="font-semibold underline hover:text-blue-700" style="color:#38BDF8;"><i class="fa-solid fa-arrow-up-right-from-square text-[10px] mr-1"></i>${escapeHtml(srcTitle)}</a>`
                     : `<span class="font-medium">${escapeHtml(srcTitle)}</span>`;
                 const mechBadge = effectiveEvidence.mechanical_verified
-                    ? `<span class="font-mono-code text-[10px] px-1.5 py-0.5 rounded" style="background:#E6F4EA; color:#137333;">Quote matched</span>`
-                    : `<span class="font-mono-code text-[10px] px-1.5 py-0.5 rounded" style="background:#FEF7E0; color:#B06000;">Unverified span</span>`;
+                    ? `<span class="font-mono-code text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(19, 78, 74, 0.36); color:#2DD4BF;">Quote matched</span>`
+                    : `<span class="font-mono-code text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(120, 53, 15, 0.32); color:#F59E0B;">Unverified span</span>`;
                 linkRow.innerHTML = `${linkHtml}${mechBadge}`;
             }
         } else {
@@ -656,8 +656,8 @@ function renderConnectedNodesList(node) {
 
     box.classList.remove("hidden");
     list.innerHTML = connected.map(item => `
-        <button type="button" onclick="inspectNodeById('${escapeHtml(item.id)}')" class="px-2.5 py-1 rounded-lg border text-[11px] font-medium hover:border-blue-500 transition flex items-center space-x-1.5" style="background:#FFFFFF; border-color:#DADCE0; color:#202124;">
-            <span class="font-mono-code text-[10px]" style="color:#4285F4;">${escapeHtml(item.relation)}</span>
+        <button type="button" onclick="inspectNodeById('${escapeHtml(item.id)}')" class="px-2.5 py-1 rounded-lg border text-[11px] font-medium hover:border-blue-500 transition flex items-center space-x-1.5" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18); color:#F8FAFC;">
+            <span class="font-mono-code text-[10px]" style="color:#38BDF8;">${escapeHtml(item.relation)}</span>
             <span>${escapeHtml(item.label)}</span>
         </button>
     `).join("");
@@ -675,7 +675,7 @@ function triggerTraceToSource() {
     }
     const evBox = document.getElementById("modal-evidence");
     if (evBox && !evBox.classList.contains("hidden")) {
-        evBox.style.borderColor = "#4285F4";
+        evBox.style.borderColor = "#38BDF8";
         evBox.style.boxShadow = "0 0 0 2px rgba(66, 133, 244, 0.2)";
         evBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
@@ -692,7 +692,7 @@ function clearSceneTrace() {
     }
     const evBox = document.getElementById("modal-evidence");
     if (evBox) {
-        evBox.style.borderColor = "#DADCE0";
+        evBox.style.borderColor = "rgba(148, 163, 184, 0.18)";
         evBox.style.boxShadow = "none";
     }
 }
@@ -731,21 +731,21 @@ function updatePromptModeIndicator() {
 
     if (hasUrl || rawTextVal.length > 0) {
         if (modePill) {
-            modePill.style.backgroundColor = "#E6F4EA";
-            modePill.style.color = "#137333";
+            modePill.style.backgroundColor = "rgba(19, 78, 74, 0.36)";
+            modePill.style.color = "#2DD4BF";
         }
         if (modeIcon) modeIcon.className = "fa-solid fa-satellite-dish text-[10px]";
         if (modeText) modeText.textContent = "Ingest + Ask";
-        if (submitBtn) submitBtn.style.backgroundColor = "#34A853";
+        if (submitBtn) submitBtn.style.backgroundColor = "#2DD4BF";
         if (submitLabel && !isSubmittingPrompt) submitLabel.textContent = "Assimilate";
     } else {
         if (modePill) {
-            modePill.style.backgroundColor = "#E8F0FE";
-            modePill.style.color = "#1967D2";
+            modePill.style.backgroundColor = "rgba(14, 116, 144, 0.28)";
+            modePill.style.color = "#38BDF8";
         }
         if (modeIcon) modeIcon.className = "fa-solid fa-magnifying-glass text-[10px]";
         if (modeText) modeText.textContent = "Ask";
-        if (submitBtn) submitBtn.style.backgroundColor = "#4285F4";
+        if (submitBtn) submitBtn.style.backgroundColor = "#38BDF8";
         if (submitLabel && !isSubmittingPrompt) submitLabel.textContent = "Ask";
     }
 }
@@ -908,13 +908,13 @@ function renderQueryAnswer(data) {
     let provenanceBanner = "";
     if (sessionCitationsCount > 0) {
         provenanceBanner = `
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" style="background:#E6F4EA; color:#137333; border-color:#34A853;">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" style="background:rgba(19, 78, 74, 0.36); color:#2DD4BF; border-color:#2DD4BF;">
                 <i class="fa-solid fa-circle-check mr-1"></i>Uses ${sessionCitationsCount} session-assimilated source(s) + ${seedCitationsCount} seed item(s)
             </span>
         `;
     } else {
         provenanceBanner = `
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" style="background:#F1F3F4; color:#5F6368; border-color:#DADCE0;">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" style="background:rgba(15, 23, 42, 0.78); color:#94A3B8; border-color:rgba(148, 163, 184, 0.18);">
                 <i class="fa-solid fa-seedling mr-1"></i>Grounded in ${seedCitationsCount || citations.length} seed library item(s)
             </span>
         `;
@@ -923,23 +923,23 @@ function renderQueryAnswer(data) {
     let citationsHtml = "";
     if (citations.length > 0) {
         citationsHtml = `
-            <div class="pt-2 border-t space-y-1.5" style="border-color:#DADCE0;">
+            <div class="pt-2 border-t space-y-1.5" style="border-color:rgba(148, 163, 184, 0.18);">
                 <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-semibold uppercase tracking-wider" style="color:#5F6368;">Grounded Citations &amp; Orbit Nodes (${citations.length})</span>
+                    <span class="text-[11px] font-semibold uppercase tracking-wider" style="color:#94A3B8;">Grounded Citations &amp; Orbit Nodes (${citations.length})</span>
                     ${provenanceBanner}
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     ${citations.map(c => {
                         const provBadge = c.is_seed === false
-                            ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold border" style="background:#E6F4EA; color:#137333; border-color:#34A853;">Added to this session</span>`
-                            : `<span class="px-1.5 py-0.5 rounded text-[9px] font-semibold border" style="background:#F1F3F4; color:#5F6368; border-color:#DADCE0;">Seed knowledge</span>`;
+                            ? `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold border" style="background:rgba(19, 78, 74, 0.36); color:#2DD4BF; border-color:#2DD4BF;">Added to this session</span>`
+                            : `<span class="px-1.5 py-0.5 rounded text-[9px] font-semibold border" style="background:rgba(15, 23, 42, 0.78); color:#94A3B8; border-color:rgba(148, 163, 184, 0.18);">Seed knowledge</span>`;
                         const quoteSnippet = c.exact_quote
-                            ? `<p class="text-[11px] italic truncate mt-1" style="color:#5F6368;">"${escapeHtml(c.exact_quote)}"</p>`
+                            ? `<p class="text-[11px] italic truncate mt-1" style="color:#94A3B8;">"${escapeHtml(c.exact_quote)}"</p>`
                             : "";
                         return `
-                            <button type="button" onclick="inspectNodeById('${escapeHtml(c.node_id)}')" class="text-left p-2.5 rounded-xl border hover:border-blue-500 transition bg-white space-y-1" style="border-color:#DADCE0;">
+                            <button type="button" onclick="inspectNodeById('${escapeHtml(c.node_id)}')" class="text-left p-2.5 rounded-xl border hover:border-blue-500 transition bg-white space-y-1" style="border-color:rgba(148, 163, 184, 0.18);">
                                 <div class="flex items-center justify-between gap-1">
-                                    <span class="font-semibold text-xs truncate" style="color:#1967D2;">${escapeHtml(c.label || c.node_id)}</span>
+                                    <span class="font-semibold text-xs truncate" style="color:#38BDF8;">${escapeHtml(c.label || c.node_id)}</span>
                                     ${provBadge}
                                 </div>
                                 ${quoteSnippet}
@@ -955,12 +955,12 @@ function renderQueryAnswer(data) {
         <div class="space-y-2.5">
             <div class="flex items-center justify-between gap-2 flex-wrap">
                 <div class="flex items-center space-x-1.5">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border" style="background:#E8F0FE; color:#1967D2; border-color:#4285F4;">Grounded Answer</span>
-                    <span class="text-xs font-semibold" style="color:#202124;">${escapeHtml(data.question || "")}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border" style="background:rgba(14, 116, 144, 0.28); color:#38BDF8; border-color:#38BDF8;">Grounded Answer</span>
+                    <span class="text-xs font-semibold" style="color:#F8FAFC;">${escapeHtml(data.question || "")}</span>
                 </div>
-                <span class="font-mono-code text-[10px] px-2 py-0.5 rounded border" style="background:#F8FAFD; color:#5F6368; border-color:#DADCE0;">Read-only · Wiki unchanged</span>
+                <span class="font-mono-code text-[10px] px-2 py-0.5 rounded border" style="background:rgba(15, 23, 42, 0.78); color:#94A3B8; border-color:rgba(148, 163, 184, 0.18);">Read-only · Wiki unchanged</span>
             </div>
-            <div class="p-3 rounded-xl border text-xs leading-relaxed whitespace-pre-line" style="background:#F8FAFD; border-color:#DADCE0; color:#202124;">${escapeHtml(data.answer || "No grounded answer returned.")}</div>
+            <div class="p-3 rounded-xl border text-xs leading-relaxed whitespace-pre-line" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18); color:#F8FAFC;">${escapeHtml(data.answer || "No grounded answer returned.")}</div>
             ${citationsHtml}
         </div>
     `;
@@ -1064,8 +1064,8 @@ function renderPipelineTraceCard(pipelineTrace) {
         null;
 
     const badgeStyle = selfCorrected
-        ? "background:#FEF7E0; color:#B06000; border-color:#FBBC05;"
-        : "background:#E6F4EA; color:#137333; border-color:#34A853;";
+        ? "background:rgba(120, 53, 15, 0.32); color:#F59E0B; border-color:#F59E0B;"
+        : "background:rgba(19, 78, 74, 0.36); color:#2DD4BF; border-color:#2DD4BF;";
     const badgeText = selfCorrected
         ? "SELF-CORRECTED (Turn 2 Repair)"
         : "QUOTE VERIFIED (Turn 1)";
@@ -1078,11 +1078,11 @@ function renderPipelineTraceCard(pipelineTrace) {
     let thoughtsHtml = "";
     if (thoughtList.length > 0) {
         thoughtsHtml = `
-            <details class="pt-1.5 border-t text-[11px]" style="border-color:#DADCE0;">
-                <summary class="cursor-pointer font-semibold select-none" style="color:#1967D2;">
+            <details class="pt-1.5 border-t text-[11px]" style="border-color:rgba(148, 163, 184, 0.18);">
+                <summary class="cursor-pointer font-semibold select-none" style="color:#38BDF8;">
                     <i class="fa-solid fa-brain mr-1"></i>Argon Reasoning &amp; Verification Trace (${thoughtList.length} step${thoughtList.length > 1 ? "s" : ""})
                 </summary>
-                <ul class="mt-1.5 space-y-1 list-disc list-inside p-2 rounded-lg border bg-white" style="border-color:#DADCE0; color:#5F6368;">
+                <ul class="mt-1.5 space-y-1 list-disc list-inside p-2 rounded-lg border bg-white" style="border-color:rgba(148, 163, 184, 0.18); color:#94A3B8;">
                     ${thoughtList.map(t => `<li class="leading-relaxed">${escapeHtml(t)}</li>`).join("")}
                 </ul>
             </details>
@@ -1090,9 +1090,9 @@ function renderPipelineTraceCard(pipelineTrace) {
     }
 
     return `
-        <div id="pipeline-trace-card" class="p-3 rounded-xl border space-y-2" style="background:#F8FAFD; border-color:#DADCE0;">
+        <div id="pipeline-trace-card" class="p-3 rounded-xl border space-y-2" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18);">
             <div class="flex items-center justify-between flex-wrap gap-1">
-                <span class="text-[11px] font-bold uppercase tracking-wider flex items-center space-x-1.5" style="color:#1967D2;">
+                <span class="text-[11px] font-bold uppercase tracking-wider flex items-center space-x-1.5" style="color:#38BDF8;">
                     <i class="fa-solid fa-shield-halved"></i>
                     <span>Mechanical &amp; Semantic Verification Trace</span>
                 </span>
@@ -1100,9 +1100,9 @@ function renderPipelineTraceCard(pipelineTrace) {
                     ${escapeHtml(badgeText)}
                 </span>
             </div>
-            <div class="flex flex-wrap items-center gap-2 text-[11px]" style="color:#5F6368;">
-                <span class="font-mono-code px-2 py-0.5 rounded border bg-white" style="border-color:#DADCE0;">Turn 1: ${escapeHtml(turn1Id)}</span>
-                ${turn2Id ? `<span class="font-mono-code px-2 py-0.5 rounded border" style="background:#FEF7E0; border-color:#FBBC05; color:#B06000;">Turn 2 (previous_interaction_id): ${escapeHtml(turn2Id)}</span>` : ""}
+            <div class="flex flex-wrap items-center gap-2 text-[11px]" style="color:#94A3B8;">
+                <span class="font-mono-code px-2 py-0.5 rounded border bg-white" style="border-color:rgba(148, 163, 184, 0.18);">Turn 1: ${escapeHtml(turn1Id)}</span>
+                ${turn2Id ? `<span class="font-mono-code px-2 py-0.5 rounded border" style="background:rgba(120, 53, 15, 0.32); border-color:#F59E0B; color:#F59E0B;">Turn 2 (previous_interaction_id): ${escapeHtml(turn2Id)}</span>` : ""}
             </div>
             ${thoughtsHtml}
         </div>
@@ -1123,37 +1123,37 @@ function renderChangeSet(cs, pipelineTrace = null) {
     const effectiveTrace = pipelineTrace || cs.pipeline_trace || activePipelineTrace || null;
     const validSourceUrl = safeHttpUrl(cs.resolved_url || cs.source_url);
     const sourceLinkHtml = validSourceUrl
-        ? `<a href="${escapeHtml(validSourceUrl)}" target="_blank" rel="noopener noreferrer" class="underline font-mono-code text-[11px]" style="color:#1967D2;">${escapeHtml(validSourceUrl)}</a>`
-        : `<span class="font-mono-code text-[11px]" style="color:#5F6368;">${escapeHtml(cs.source_url || "Direct text excerpt")}</span>`;
+        ? `<a href="${escapeHtml(validSourceUrl)}" target="_blank" rel="noopener noreferrer" class="underline font-mono-code text-[11px]" style="color:#38BDF8;">${escapeHtml(validSourceUrl)}</a>`
+        : `<span class="font-mono-code text-[11px]" style="color:#94A3B8;">${escapeHtml(cs.source_url || "Direct text excerpt")}</span>`;
 
     let html = "";
 
     if (cs.answer || cs.question) {
         html += `
-            <div class="p-3 rounded-xl border space-y-1.5" style="background:#E8F0FE; border-color:#4285F4;">
+            <div class="p-3 rounded-xl border space-y-1.5" style="background:rgba(14, 116, 144, 0.28); border-color:#38BDF8;">
                 <div class="flex items-center justify-between flex-wrap gap-1">
-                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-white border" style="color:#1967D2; border-color:#4285F4;">
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-white border" style="color:#38BDF8; border-color:#38BDF8;">
                         <i class="fa-solid fa-comment-dots mr-1"></i>Answer from Source
                     </span>
-                    <span class="text-[10px] font-semibold" style="color:#1967D2;">Candidate changes below await your approval</span>
+                    <span class="text-[10px] font-semibold" style="color:#38BDF8;">Candidate changes below await your approval</span>
                 </div>
-                ${cs.question ? `<p class="text-xs font-semibold" style="color:#202124;">Q: ${escapeHtml(cs.question)}</p>` : ""}
-                <p class="text-xs leading-relaxed" style="color:#202124;">${escapeHtml(cs.answer || "See extracted claims and concepts below.")}</p>
+                ${cs.question ? `<p class="text-xs font-semibold" style="color:#F8FAFC;">Q: ${escapeHtml(cs.question)}</p>` : ""}
+                <p class="text-xs leading-relaxed" style="color:#F8FAFC;">${escapeHtml(cs.answer || "See extracted claims and concepts below.")}</p>
             </div>
         `;
     }
 
     html += `
-        <div class="p-3 rounded-xl border bg-white space-y-1" style="border-color:#DADCE0;">
+        <div class="p-3 rounded-xl border bg-white space-y-1" style="border-color:rgba(148, 163, 184, 0.18);">
             <div class="flex items-center justify-between flex-wrap gap-1">
                 <div class="flex items-center space-x-2">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border" style="background:#E8F0FE; color:#1967D2; border-color:#4285F4;">Source located</span>
-                    <h4 class="font-bold text-xs" style="color:#202124;">${escapeHtml(cs.source_title || "Ingested Source")}</h4>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border" style="background:rgba(14, 116, 144, 0.28); color:#38BDF8; border-color:#38BDF8;">Source located</span>
+                    <h4 class="font-bold text-xs" style="color:#F8FAFC;">${escapeHtml(cs.source_title || "Ingested Source")}</h4>
                 </div>
-                <span class="font-mono-code text-[10px]" style="color:#5F6368;">ChangeSet: ${escapeHtml(cs.id)}</span>
+                <span class="font-mono-code text-[10px]" style="color:#94A3B8;">ChangeSet: ${escapeHtml(cs.id)}</span>
             </div>
             <div>${sourceLinkHtml}</div>
-            ${cs.rationale ? `<p class="text-[11px] pt-1" style="color:#5F6368;"><strong style="color:#202124;">Semantic Alignment Rationale:</strong> ${escapeHtml(cs.rationale)}</p>` : ""}
+            ${cs.rationale ? `<p class="text-[11px] pt-1" style="color:#94A3B8;"><strong style="color:#F8FAFC;">Semantic Alignment Rationale:</strong> ${escapeHtml(cs.rationale)}</p>` : ""}
         </div>
     `;
 
@@ -1164,34 +1164,34 @@ function renderChangeSet(cs, pipelineTrace = null) {
         html += `
             <div class="space-y-1.5">
                 <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-bold uppercase tracking-wider" style="color:#202124;">1. Semantic Alignment: Terms &amp; Concepts (${proposedConcepts.length})</span>
-                    <span class="text-[10px]" style="color:#5F6368;">Check items to merge/add</span>
+                    <span class="text-[11px] font-bold uppercase tracking-wider" style="color:#F8FAFC;">1. Semantic Alignment: Terms &amp; Concepts (${proposedConcepts.length})</span>
+                    <span class="text-[10px]" style="color:#94A3B8;">Check items to merge/add</span>
                 </div>
         `;
         proposedConcepts.forEach(c => {
             const action = (c.action || (c.status === "UNRESOLVED" ? "UNRESOLVED" : "PROPOSE")).toUpperCase();
             const isUnresolved = c.status === "UNRESOLVED" || action === "UNRESOLVED";
             const actionStyle = action === "MATCH"
-                ? "background:#E8F0FE; color:#1967D2; border-color:#4285F4;"
-                : (isUnresolved ? "background:#FCE8E6; color:#C5221F; border-color:#EA4335;" : "background:#E6F4EA; color:#137333; border-color:#34A853;");
+                ? "background:rgba(14, 116, 144, 0.28); color:#38BDF8; border-color:#38BDF8;"
+                : (isUnresolved ? "background:rgba(136, 19, 55, 0.35); color:#F43F5E; border-color:#F43F5E;" : "background:rgba(19, 78, 74, 0.36); color:#2DD4BF; border-color:#2DD4BF;");
             const actionLabel = action === "MATCH"
                 ? "MATCH · Canonical Alias"
                 : (isUnresolved ? "UNRESOLVED · Held Back" : `PROPOSE · New ${c.node_type || "CONCEPT"}`);
             const aliases = Array.isArray(c.synonyms) && c.synonyms.length > 0
-                ? `<div class="text-[10px] font-mono-code mt-0.5" style="color:#5F6368;">Aliases: ${escapeHtml(c.synonyms.join(", "))}</div>`
+                ? `<div class="text-[10px] font-mono-code mt-0.5" style="color:#94A3B8;">Aliases: ${escapeHtml(c.synonyms.join(", "))}</div>`
                 : "";
 
             html += `
-                <label class="p-2.5 rounded-xl border bg-white flex items-start space-x-2.5 cursor-pointer hover:border-blue-400 transition" style="border-color:#DADCE0;">
+                <label class="p-2.5 rounded-xl border bg-white flex items-start space-x-2.5 cursor-pointer hover:border-blue-400 transition" style="border-color:rgba(148, 163, 184, 0.18);">
                     <input type="checkbox" class="diff-concept-cb mt-1 w-3.5 h-3.5 rounded" data-id="${escapeHtml(c.id)}" ${isUnresolved ? "disabled" : "checked"} onchange="updateDiffSelectionSummary()">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center justify-between flex-wrap gap-1">
-                            <span class="font-semibold text-xs" style="color:#202124;">${escapeHtml(c.name)}</span>
+                            <span class="font-semibold text-xs" style="color:#F8FAFC;">${escapeHtml(c.name)}</span>
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded border" style="${actionStyle}">${escapeHtml(actionLabel)}</span>
                         </div>
                         ${aliases}
-                        <p class="text-[11px] mt-1 leading-relaxed" style="color:#5F6368;">${escapeHtml(c.description || "")}</p>
-                        ${c.alignment_reason ? `<p class="text-[10px] mt-0.5 italic" style="color:#1967D2;">${escapeHtml(c.alignment_reason)}</p>` : ""}
+                        <p class="text-[11px] mt-1 leading-relaxed" style="color:#94A3B8;">${escapeHtml(c.description || "")}</p>
+                        ${c.alignment_reason ? `<p class="text-[10px] mt-0.5 italic" style="color:#38BDF8;">${escapeHtml(c.alignment_reason)}</p>` : ""}
                     </div>
                 </label>
             `;
@@ -1203,19 +1203,19 @@ function renderChangeSet(cs, pipelineTrace = null) {
     if (proposedRelations.length > 0) {
         html += `
             <div class="space-y-1.5">
-                <span class="text-[11px] font-bold uppercase tracking-wider block" style="color:#202124;">2. Proposed Semantic Relations (${proposedRelations.length})</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider block" style="color:#F8FAFC;">2. Proposed Semantic Relations (${proposedRelations.length})</span>
         `;
         proposedRelations.forEach(r => {
             html += `
-                <label class="p-2.5 rounded-xl border bg-white flex items-start space-x-2.5 cursor-pointer hover:border-blue-400 transition" style="border-color:#DADCE0;">
+                <label class="p-2.5 rounded-xl border bg-white flex items-start space-x-2.5 cursor-pointer hover:border-blue-400 transition" style="border-color:rgba(148, 163, 184, 0.18);">
                     <input type="checkbox" class="diff-relation-cb mt-1 w-3.5 h-3.5 rounded" data-id="${escapeHtml(r.id)}" checked onchange="updateDiffSelectionSummary()">
                     <div class="flex-1 text-xs">
                         <div class="font-mono-code text-[11px] flex items-center flex-wrap gap-1">
-                            <span class="font-semibold" style="color:#202124;">${escapeHtml(r.source_id)}</span>
-                            <span class="px-1.5 py-0.5 rounded border" style="background:#E8F0FE; color:#1967D2; border-color:#4285F4;">—[ ${escapeHtml(r.predicate)} ]→</span>
-                            <span class="font-semibold" style="color:#202124;">${escapeHtml(r.target_id)}</span>
+                            <span class="font-semibold" style="color:#F8FAFC;">${escapeHtml(r.source_id)}</span>
+                            <span class="px-1.5 py-0.5 rounded border" style="background:rgba(14, 116, 144, 0.28); color:#38BDF8; border-color:#38BDF8;">—[ ${escapeHtml(r.predicate)} ]→</span>
+                            <span class="font-semibold" style="color:#F8FAFC;">${escapeHtml(r.target_id)}</span>
                         </div>
-                        ${r.description ? `<p class="text-[11px] mt-1" style="color:#5F6368;">${escapeHtml(r.description)}</p>` : ""}
+                        ${r.description ? `<p class="text-[11px] mt-1" style="color:#94A3B8;">${escapeHtml(r.description)}</p>` : ""}
                     </div>
                 </label>
             `;
@@ -1227,29 +1227,29 @@ function renderChangeSet(cs, pipelineTrace = null) {
     if (proposedClaims.length > 0) {
         html += `
             <div class="space-y-1.5">
-                <span class="text-[11px] font-bold uppercase tracking-wider block" style="color:#202124;">3. Verified Grounded Claims (${proposedClaims.length})</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider block" style="color:#F8FAFC;">3. Verified Grounded Claims (${proposedClaims.length})</span>
         `;
         proposedClaims.forEach(cl => {
             const quoteText = cl.evidence && cl.evidence.exact_quote ? cl.evidence.exact_quote : "";
             const anchorText = cl.evidence && cl.evidence.section_anchor ? cl.evidence.section_anchor : "Source body";
             html += `
-                <label class="p-3 rounded-xl border bg-white flex items-start space-x-2.5 cursor-pointer hover:border-blue-400 transition" style="border-color:#DADCE0;">
+                <label class="p-3 rounded-xl border bg-white flex items-start space-x-2.5 cursor-pointer hover:border-blue-400 transition" style="border-color:rgba(148, 163, 184, 0.18);">
                     <input type="checkbox" class="diff-claim-cb mt-1 w-3.5 h-3.5 rounded" data-id="${escapeHtml(cl.id)}" checked onchange="updateDiffSelectionSummary()">
                     <div class="flex-1 space-y-1.5">
                         <div class="flex items-center justify-between flex-wrap gap-1">
-                            <span class="font-mono-code text-[10px] px-1.5 py-0.5 rounded border" style="background:#F8FAFD; color:#5F6368; border-color:#DADCE0;">Concept: ${escapeHtml(cl.concept_id)}</span>
+                            <span class="font-mono-code text-[10px] px-1.5 py-0.5 rounded border" style="background:rgba(15, 23, 42, 0.78); color:#94A3B8; border-color:rgba(148, 163, 184, 0.18);">Concept: ${escapeHtml(cl.concept_id)}</span>
                             <div class="flex items-center gap-1 flex-wrap">
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" style="background:#E8F0FE; color:#1967D2; border-color:#4285F4;">Source located</span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" style="background:#E6F4EA; color:#137333; border-color:#34A853;">Quote matched</span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" style="background:#E8F0FE; color:#1967D2; border-color:#4285F4;">Model-reviewed</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" style="background:rgba(14, 116, 144, 0.28); color:#38BDF8; border-color:#38BDF8;">Source located</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" style="background:rgba(19, 78, 74, 0.36); color:#2DD4BF; border-color:#2DD4BF;">Quote matched</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" style="background:rgba(14, 116, 144, 0.28); color:#38BDF8; border-color:#38BDF8;">Model-reviewed</span>
                             </div>
                         </div>
-                        <p class="text-xs font-medium leading-relaxed" style="color:#202124;">${escapeHtml(cl.statement)}</p>
-                        ${cl.conditions ? `<p class="text-[11px] px-2 py-1 rounded border" style="background:#FEF7E0; border-color:#FBBC05; color:#B06000;"><strong>Conditions / Scope:</strong> ${escapeHtml(cl.conditions)}</p>` : ""}
+                        <p class="text-xs font-medium leading-relaxed" style="color:#F8FAFC;">${escapeHtml(cl.statement)}</p>
+                        ${cl.conditions ? `<p class="text-[11px] px-2 py-1 rounded border" style="background:rgba(120, 53, 15, 0.32); border-color:#F59E0B; color:#F59E0B;"><strong>Conditions / Scope:</strong> ${escapeHtml(cl.conditions)}</p>` : ""}
                         ${quoteText ? `
-                            <div class="p-2 rounded-lg border text-[11px] italic" style="background:#F8FAFD; border-color:#DADCE0; color:#5F6368;">
-                                <i class="fa-solid fa-quote-left text-[9px] mr-1" style="color:#4285F4;"></i>"${escapeHtml(quoteText)}"
-                                <span class="not-italic font-mono-code text-[10px] ml-1" style="color:#1967D2;">[${escapeHtml(anchorText)}]</span>
+                            <div class="p-2 rounded-lg border text-[11px] italic" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18); color:#94A3B8;">
+                                <i class="fa-solid fa-quote-left text-[9px] mr-1" style="color:#38BDF8;"></i>"${escapeHtml(quoteText)}"
+                                <span class="not-italic font-mono-code text-[10px] ml-1" style="color:#38BDF8;">[${escapeHtml(anchorText)}]</span>
                             </div>
                         ` : ""}
                     </div>
@@ -1264,7 +1264,7 @@ function renderChangeSet(cs, pipelineTrace = null) {
     if (conflicts.length > 0 || blocked.length > 0) {
         html += `
             <div class="space-y-1.5 pt-1">
-                <span class="text-[11px] font-bold uppercase tracking-wider flex items-center space-x-1.5" style="color:#C5221F;">
+                <span class="text-[11px] font-bold uppercase tracking-wider flex items-center space-x-1.5" style="color:#F43F5E;">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                     <span>Held Back — Conflicts &amp; Unverified Claims (${conflicts.length + blocked.length})</span>
                 </span>
@@ -1275,17 +1275,17 @@ function renderChangeSet(cs, pipelineTrace = null) {
                 ? `Conflicts with: ${cl.conflicts_with.join(", ")}`
                 : "Unresolved semantic conflict";
             html += `
-                <div class="p-3 rounded-xl border flex items-start space-x-2.5 opacity-95" style="background:#FCE8E6; border-color:#EA4335;">
+                <div class="p-3 rounded-xl border flex items-start space-x-2.5 opacity-95" style="background:rgba(136, 19, 55, 0.35); border-color:#F43F5E;">
                     <input type="checkbox" disabled class="mt-1 w-3.5 h-3.5 rounded cursor-not-allowed">
                     <div class="flex-1 space-y-1">
                         <div class="flex items-center justify-between flex-wrap gap-1">
-                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-white border" style="color:#C5221F; border-color:#EA4335;">
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-white border" style="color:#F43F5E; border-color:#F43F5E;">
                                 <i class="fa-solid fa-triangle-exclamation mr-1"></i>Needs review · Held Back
                             </span>
-                            <span class="font-mono-code text-[10px]" style="color:#C5221F;">${escapeHtml(conflictTargets)}</span>
+                            <span class="font-mono-code text-[10px]" style="color:#F43F5E;">${escapeHtml(conflictTargets)}</span>
                         </div>
-                        <p class="text-xs font-medium" style="color:#202124;">${escapeHtml(cl.statement)}</p>
-                        <p class="text-[11px]" style="color:#C5221F;">${escapeHtml(reason)}</p>
+                        <p class="text-xs font-medium" style="color:#F8FAFC;">${escapeHtml(cl.statement)}</p>
+                        <p class="text-[11px]" style="color:#F43F5E;">${escapeHtml(reason)}</p>
                     </div>
                 </div>
             `;
@@ -1294,16 +1294,16 @@ function renderChangeSet(cs, pipelineTrace = null) {
         blocked.forEach(cl => {
             const reason = cl.conflict_reason || cl.semantic_review_note || "Mechanical quote check failed: exact verbatim quote not found in source text.";
             html += `
-                <div class="p-3 rounded-xl border flex items-start space-x-2.5 opacity-95" style="background:#FCE8E6; border-color:#EA4335;">
+                <div class="p-3 rounded-xl border flex items-start space-x-2.5 opacity-95" style="background:rgba(136, 19, 55, 0.35); border-color:#F43F5E;">
                     <input type="checkbox" disabled class="mt-1 w-3.5 h-3.5 rounded cursor-not-allowed">
                     <div class="flex-1 space-y-1">
                         <div class="flex items-center justify-between flex-wrap gap-1">
-                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-white border" style="color:#C5221F; border-color:#EA4335;">
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-white border" style="color:#F43F5E; border-color:#F43F5E;">
                                 <i class="fa-solid fa-ban mr-1"></i>Blocked · Quote Mismatch
                             </span>
                         </div>
-                        <p class="text-xs font-medium" style="color:#202124;">${escapeHtml(cl.statement)}</p>
-                        <p class="text-[11px]" style="color:#C5221F;">${escapeHtml(reason)}</p>
+                        <p class="text-xs font-medium" style="color:#F8FAFC;">${escapeHtml(cl.statement)}</p>
+                        <p class="text-[11px]" style="color:#F43F5E;">${escapeHtml(reason)}</p>
                     </div>
                 </div>
             `;
@@ -1390,16 +1390,16 @@ async function approveCurrentChangeSet() {
         const container = document.getElementById("diff-content");
         if (container) {
             container.innerHTML = `
-                <div class="p-4 rounded-xl border text-center space-y-2.5" style="background:#E6F4EA; border-color:#34A853; color:#137333;">
+                <div class="p-4 rounded-xl border text-center space-y-2.5" style="background:rgba(19, 78, 74, 0.36); border-color:#2DD4BF; color:#2DD4BF;">
                     <div class="flex items-center justify-center space-x-2 font-bold text-sm">
                         <i class="fa-solid fa-circle-check text-base"></i>
                         <span>Added to this session's Living Wiki</span>
                     </div>
-                    <p class="text-xs" style="color:#202124;">
+                    <p class="text-xs" style="color:#F8FAFC;">
                         Committed <strong>${conceptIds.length}</strong> concept(s), <strong>${relationIds.length}</strong> relation(s), and <strong>${claimIds.length}</strong> verified claim(s) into the Right White Hole. Unresolved or unchecked items were not promoted.
                     </p>
                     <div class="pt-1 flex items-center justify-center gap-2">
-                        <button type="button" onclick="applyPromptPreset('followup_query')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white shadow-sm" style="background:#4285F4;">
+                        <button type="button" onclick="applyPromptPreset('followup_query')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white shadow-sm" style="background:#38BDF8;">
                             <i class="fa-solid fa-magnifying-glass mr-1"></i>Ask a follow-up question in prompt
                         </button>
                     </div>
@@ -1438,9 +1438,9 @@ async function rejectCurrentChangeSet() {
         const container = document.getElementById("diff-content");
         if (container) {
             container.innerHTML = `
-                <div class="p-4 rounded-xl border text-center space-y-1.5" style="background:#F8FAFD; border-color:#DADCE0; color:#5F6368;">
-                    <div class="font-semibold text-xs" style="color:#202124;">
-                        <i class="fa-solid fa-ban mr-1" style="color:#EA4335;"></i>Candidate ChangeSet Rejected
+                <div class="p-4 rounded-xl border text-center space-y-1.5" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18); color:#94A3B8;">
+                    <div class="font-semibold text-xs" style="color:#F8FAFC;">
+                        <i class="fa-solid fa-ban mr-1" style="color:#F43F5E;"></i>Candidate ChangeSet Rejected
                     </div>
                     <p class="text-xs">No candidate claims or concepts were added. Your existing session Wiki remains unchanged.</p>
                 </div>
@@ -1491,3 +1491,18 @@ window.addEventListener("DOMContentLoaded", () => {
     updatePromptModeIndicator();
     fetchState();
 });
+
+function setConstellationLens(lens) {
+    if (sceneManager && typeof sceneManager.setLayerFilter === 'function') {
+        sceneManager.setLayerFilter(lens);
+    }
+    const btns = document.querySelectorAll('.lens-filter-btn');
+    btns.forEach(btn => {
+        btn.style.textDecoration = 'none';
+        btn.style.fontWeight = 'normal';
+    });
+    if(event && event.currentTarget) {
+        event.currentTarget.style.textDecoration = 'underline';
+        event.currentTarget.style.fontWeight = 'bold';
+    }
+}
