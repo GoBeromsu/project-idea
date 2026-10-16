@@ -147,7 +147,7 @@ async def run_benchmark():
     )
 
     print("\n--- TEST 6: 4-Layer Semantic Jargon Scan (gemini-3.8-flash) & Adversarial Isolation ---")
-    state_snapshot = temp_store.get_state_snapshot()
+    state_snapshot = temp_store.get_state()
     assert state_snapshot["rings_count"] == 4
     assert set(state_snapshot["layer_counts"].keys()) == {"jargon", "concepts", "entities", "wiki"}
 
@@ -158,9 +158,10 @@ async def run_benchmark():
         },
         seed_ontology=post_ontology,
     )
-    print(f"Flash Jargon Scan Model: {scan_res.model_used} | Candidates: {len(scan_res.scan.candidates)}")
-    assert scan_res.model_used == "gemini-3.8-flash"
-    assert any(c.action == "UNRESOLVED" for c in scan_res.scan.candidates)
+    candidates = scan_res["scan"]["candidates"]
+    print(f"Flash Jargon Scan Model: {scan_res['model_used']} | Candidates: {len(candidates)}")
+    assert scan_res["model_used"] == "gemini-3.8-flash"
+    assert any(c.get("action") == "UNRESOLVED" for c in candidates)
 
     print("\nALL 6 BENCHMARK TESTS PASSED SUCCESSFULLY!")
 
