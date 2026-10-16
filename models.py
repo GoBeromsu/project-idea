@@ -60,17 +60,32 @@ class ChangeSet(BaseModel):
     status: str = Field("PENDING", description="PENDING, APPROVED, REJECTED")
     created_at: Optional[str] = None
 
+class ExtractedConcept(BaseModel):
+    id: Optional[str] = Field(None, description="Existing concept ID if MATCH, or proposed ID if PROPOSE")
+    name: str = Field(..., description="Canonical or proposed concept name")
+    action: str = Field("PROPOSE", description="MATCH, PROPOSE, or UNRESOLVED")
+    synonyms: List[str] = Field(default_factory=list)
+    description: str = Field("", description="Definition of concept")
+
+class ExtractedRelation(BaseModel):
+    source_id: str = Field(..., description="Source concept ID")
+    target_id: str = Field(..., description="Target concept ID")
+    predicate: str = Field(..., description="Relation predicate, e.g. uses, implements_via")
+    description: Optional[str] = None
+
+class ExtractedEvidence(BaseModel):
+    section_anchor: str = Field("Introduction", description="Section or header name")
+    exact_quote: str = Field(..., description="EXACT verbatim substring from source text")
+
+class ExtractedClaim(BaseModel):
+    concept_id: str = Field(..., description="Associated concept ID")
+    statement: str = Field(..., description="Concise factual statement")
+    status: Optional[str] = Field("PROPOSED", description="PROPOSED or UNRESOLVED")
+    conflicts_with: Optional[List[str]] = Field(default_factory=list, description="IDs of existing conflicting claims")
+    evidence: ExtractedEvidence = Field(..., description="Verbatim quote citation")
+
 class AssimilationExtraction(BaseModel):
-    aligned_concepts: List[Dict[str, Any]] = Field(
-        default_factory=list,
-        description="Concepts extracted with action: MATCH, PROPOSE, or UNRESOLVED"
-    )
-    extracted_relations: List[Dict[str, Any]] = Field(
-        default_factory=list,
-        description="Extracted relational triples"
-    )
-    claims: List[Dict[str, Any]] = Field(
-        default_factory=list,
-        description="Factual claims with exact source evidence quote"
-    )
+    aligned_concepts: List[ExtractedConcept] = Field(default_factory=list)
+    extracted_relations: List[ExtractedRelation] = Field(default_factory=list)
+    claims: List[ExtractedClaim] = Field(default_factory=list)
     rationale: str = Field(..., description="Reasoning for alignment and conflict detection")
