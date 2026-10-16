@@ -39,6 +39,18 @@ function escapeHtml(value) {
         .replace(/'/g, "&#39;");
 }
 
+function formatMarkdown(text) {
+    if (!text) return "";
+    let safe = escapeHtml(text);
+    safe = safe.replace(/```([\s\S]*?)```/g, (m, code) => `<pre class="my-2 p-2.5 rounded-lg bg-slate-950/90 border border-slate-700/60 font-mono-code text-[11px] overflow-x-auto text-sky-300"><code>${code}</code></pre>`);
+    safe = safe.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded font-mono-code text-[11px] bg-slate-950/80 text-sky-300 border border-sky-500/20">$1</code>');
+    safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
+    safe = safe.replace(/^[\*\-]\s+(.+)$/gm, '<li class="ml-4 list-disc text-slate-200 my-0.5">$1</li>');
+    safe = safe.replace(/^(\d+)\.\s+(.+)$/gm, '<li class="ml-4 list-decimal text-slate-200 my-0.5">$2</li>');
+    safe = safe.replace(/\n\n+/g, '</p><p class="mt-2 text-slate-100 leading-relaxed">');
+    return `<p class="text-slate-100 leading-relaxed">${safe}</p>`;
+}
+
 function safeHttpUrl(rawUrl) {
     if (!rawUrl || typeof rawUrl !== "string") return null;
     const trimmed = rawUrl.trim();
@@ -257,6 +269,7 @@ function showOverlayError(title, message) {
     if (card) {
         card.classList.remove("hidden");
         card.classList.remove("collapsed");
+        document.body.classList.add("sidepanel-open");
         syncCollapseButtonState();
     }
     if (titleEl) titleEl.textContent = title || "Execution Error";
@@ -275,6 +288,7 @@ function switchOverlayTab(tabName) {
     if (card) {
         card.classList.remove("hidden");
         card.classList.remove("collapsed");
+        document.body.classList.add("sidepanel-open");
         syncCollapseButtonState();
     }
 
@@ -329,6 +343,11 @@ function toggleCollapseOverlay() {
     const card = document.getElementById("overlay-card");
     if (!card) return;
     card.classList.toggle("collapsed");
+    if (card.classList.contains("collapsed")) {
+        document.body.classList.remove("sidepanel-open");
+    } else {
+        document.body.classList.add("sidepanel-open");
+    }
     syncCollapseButtonState();
 }
 
@@ -338,6 +357,7 @@ function closeOverlayCard() {
         card.classList.add("hidden");
         card.classList.remove("collapsed");
     }
+    document.body.classList.remove("sidepanel-open");
     hideOverlayError();
     if (sceneManager) {
         sceneManager.clearTrace();
@@ -596,7 +616,7 @@ function showNodeModal(data) {
             if (data.alignment_reason) {
                 text += ` (Alignment note: ${data.alignment_reason})`;
             }
-            descEl.textContent = text;
+            descEl.innerHTML = formatMarkdown(text);
         }
     }
 
@@ -1011,7 +1031,9 @@ function renderQueryAnswer(data) {
                 </div>
                 <span class="font-mono-code text-[10px] px-2 py-0.5 rounded border" style="background:rgba(15, 23, 42, 0.78); color:#94A3B8; border-color:rgba(148, 163, 184, 0.18);">Read-only · Wiki unchanged</span>
             </div>
-            <div class="p-3 rounded-xl border text-xs leading-relaxed whitespace-pre-line" style="background:rgba(15, 23, 42, 0.78); border-color:rgba(148, 163, 184, 0.18); color:#F8FAFC;">${escapeHtml(data.answer || "No grounded answer returned.")}</div>
+            <div class="p-3.5 rounded-xl border text-xs leading-relaxed idea-markdown-prose" style="background:rgba(15, 23, 42, 0.85); border-color:rgba(148, 163, 184, 0.22); color:#F8FAFC;">
+                ${formatMarkdown(data.answer || "No grounded answer returned.")}
+            </div>
             ${citationsHtml}
         </div>
     `;
@@ -1563,17 +1585,3 @@ window.addEventListener("DOMContentLoaded", () => {
     fetchState();
 });
 
-function setConstellationLens(lens) {
-    if (sceneManager && typeof sceneManager.setLayerFilter === 'function') {
-        sceneManager.setLayerFilter(lens);
-    }
-    const btns = document.querySelectorAll('.lens-filter-btn');
-    btns.forEach(btn => {
-        btn.style.textDecoration = 'none';
-        btn.style.fontWeight = 'normal';
-    });
-    if(event && event.currentTarget) {
-        event.currentTarget.style.textDecoration = 'underline';
-        event.currentTarget.style.fontWeight = 'bold';
-    }
-}

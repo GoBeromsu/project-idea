@@ -79,24 +79,25 @@
             color: #e2e8f0;
         }
         #overlay-card {
-            position: absolute;
-            bottom: 84px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: min(650px, 56vw);
-            min-width: 340px;
-            max-height: 40vh;
+            position: fixed;
+            top: 58px;
+            right: 16px;
+            bottom: 16px;
+            width: min(520px, 42vw);
+            min-width: 360px;
+            max-height: calc(100vh - 74px);
             z-index: 25;
             border-radius: 16px;
             display: flex;
             flex-direction: column;
-            transition: max-height 0.22s ease, opacity 0.18s ease;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease;
         }
         #overlay-card.hidden {
             display: none;
         }
         #overlay-card.collapsed {
-            max-height: 44px;
+            max-height: 48px;
             overflow: hidden;
         }
         #overlay-card.collapsed #overlay-card-body,
@@ -111,6 +112,41 @@
             width: min(670px, 88vw);
             min-width: 340px;
             z-index: 30;
+            transition: left 0.25s ease, width 0.25s ease;
+        }
+        body.sidepanel-open #prompt-dock {
+            left: calc(50% - 140px);
+            width: min(620px, calc(100vw - 560px));
+        }
+        .idea-markdown-prose {
+            line-height: 1.65;
+            font-size: 13px;
+            color: #F1F5F9;
+        }
+        .idea-markdown-prose strong {
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+        .idea-markdown-prose p {
+            margin-bottom: 0.75rem;
+        }
+        .idea-markdown-prose ul {
+            list-style-type: disc;
+            padding-left: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        .idea-markdown-prose li {
+            margin-bottom: 0.25rem;
+            color: #E2E8F0;
+        }
+        .idea-markdown-prose code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 2px 5px;
+            border-radius: 4px;
+            background: rgba(15, 23, 42, 0.9);
+            color: #38BDF8;
+            border: 1px solid rgba(56, 189, 248, 0.25);
         }
         .stage-step-pill {
             display: inline-flex;
@@ -292,6 +328,25 @@
         </div>
 
         <div id="overlay-card-body" class="p-4 overflow-y-auto scrollbar-dark flex-1 space-y-3 text-xs" style="color: #F8FAFC;">
+            <div id="overlay-stage-banner" class="hidden p-2.5 rounded-xl border space-y-2" style="background: rgba(15, 23, 42, 0.85); border-color: rgba(56, 189, 248, 0.25);">
+                <div class="flex items-center justify-between text-[11px]">
+                    <span id="stage-banner-title" class="font-bold flex items-center space-x-1.5" style="color: #F8FAFC;">
+                        <i class="fa-solid fa-satellite-dish text-[10px]" style="color: #38BDF8;"></i>
+                        <span>Pipeline Execution Progress</span>
+                    </span>
+                    <span id="stage-banner-status" class="font-mono-code text-[10px]" style="color: #38BDF8;">Running</span>
+                </div>
+                <div class="flex items-center flex-wrap gap-1">
+                    <div id="step-pill-ingest" class="stage-step-pill"><span class="step-dot"></span><span>1. Ingest</span></div>
+                    <span class="stage-step-arrow">→</span>
+                    <div id="step-pill-align" class="stage-step-pill"><span class="step-dot"></span><span>2. Align</span></div>
+                    <span class="stage-step-arrow">→</span>
+                    <div id="step-pill-verify" class="stage-step-pill"><span class="step-dot"></span><span>3. Verify</span></div>
+                    <span class="stage-step-arrow">→</span>
+                    <div id="step-pill-review" class="stage-step-pill"><span class="step-dot"></span><span>4. Review</span></div>
+                </div>
+            </div>
+
             <div id="overlay-error-banner" class="hidden p-3 rounded-xl border space-y-1.5" style="background: rgba(136, 19, 55, 0.35); border-color: #F43F5E; color: #F43F5E;">
                 <div class="flex items-center justify-between">
                     <span class="font-bold text-xs flex items-center space-x-1.5">
@@ -320,6 +375,7 @@
                 </div>
                 <div id="node-synonyms-row" class="hidden flex flex-wrap gap-1"></div>
                 <p id="modal-desc" class="text-xs leading-relaxed" style="color: #F8FAFC;"></p>
+                <div id="node-wiki-synthesis-box" class="hidden p-2.5 rounded-lg border text-xs idea-markdown-prose mt-2" style="background: rgba(19, 78, 74, 0.2); border-color: rgba(45, 212, 191, 0.3);"><div id="node-wiki-synthesis-content"></div></div>
                 <div id="node-conditions-box" class="hidden p-2.5 rounded-lg border text-xs" style="background: rgba(120, 53, 15, 0.32); border-color: #F59E0B; color: #F8FAFC;"></div>
                 <div id="node-conflict-box" class="hidden p-2.5 rounded-lg border text-xs" style="background: rgba(136, 19, 55, 0.35); border-color: #F43F5E; color: #F43F5E;"></div>
                 <div id="modal-evidence" class="hidden p-3 rounded-xl border space-y-1.5" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18);">
@@ -386,6 +442,45 @@
     </section>
 
     <div id="prompt-dock" class="select-text">
+        <div id="raw-source-drawer" class="hidden mb-2 p-3 rounded-2xl idea-surface-card space-y-2">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold flex items-center space-x-1.5" style="color: #38BDF8;">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <span>Optional Raw Document Text / Sample Paper</span>
+                </span>
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="loadSampleText()" class="text-[11px] font-semibold px-2 py-0.5 rounded border transition" style="background: rgba(14, 116, 144, 0.28); border-color: #38BDF8; color: #38BDF8;">
+                        Load PagedAttention Sample
+                    </button>
+                    <button type="button" onclick="toggleRawSourceDrawer(false)" class="text-xs px-1.5 py-0.5 rounded hover:bg-slate-800" style="color: #94A3B8;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <input id="input-title" type="text" placeholder="Source Title (optional)" class="w-full px-2.5 py-1.5 text-xs rounded-lg border focus:outline-none" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #F8FAFC;">
+            <textarea id="input-text" rows="3" placeholder="Paste technical document or abstract text to ingest alongside your prompt..." class="w-full px-2.5 py-1.5 text-xs rounded-lg border font-mono-code focus:outline-none scrollbar-dark" style="background: rgba(15, 23, 42, 0.78); border-color: rgba(148, 163, 184, 0.18); color: #F8FAFC;"></textarea>
+        </div>
+
+        <div id="prompt-preprocess-bar" class="hidden mb-2 px-3 py-2 rounded-xl idea-surface-card flex items-center gap-2 flex-wrap text-[11px] empty:hidden"></div>
+
+        <div class="flex items-center justify-between mb-1.5 px-1">
+            <div class="flex items-center flex-wrap gap-1.5">
+                <span class="text-[11px] font-medium" style="color: #94A3B8;">Try:</span>
+                <button id="preset-query-seed" type="button" onclick="applyPromptPreset('seed_query')" class="px-2.5 py-0.5 rounded-full text-[11px] font-medium border transition hover:border-sky-400" style="background: rgba(10, 15, 30, 0.85); border-color: rgba(148, 163, 184, 0.22); color: #E2E8F0;">
+                    How does MCTS improve reasoning?
+                </button>
+                <button id="preset-ingest-arxiv" type="button" onclick="applyPromptPreset('ingest_sample')" class="px-2.5 py-0.5 rounded-full text-[11px] font-medium border transition hover:border-sky-400" style="background: rgba(14, 116, 144, 0.24); border-color: rgba(56, 189, 248, 0.45); color: #38BDF8;">
+                    <i class="fa-solid fa-bolt text-[10px] mr-1"></i>Ingest PagedAttention + Ask
+                </button>
+                <button id="preset-query-followup" type="button" onclick="applyPromptPreset('followup_query')" class="px-2.5 py-0.5 rounded-full text-[11px] font-medium border transition hover:border-teal-400" style="background: rgba(19, 78, 74, 0.28); border-color: rgba(45, 212, 191, 0.45); color: #2DD4BF;">
+                    Re-query PagedAttention KV cache
+                </button>
+            </div>
+            <button id="btn-toggle-raw-drawer" type="button" onclick="toggleRawSourceDrawer()" class="px-2.5 py-0.5 rounded-full text-[11px] font-medium border transition" style="background: rgba(10, 15, 30, 0.85); border-color: rgba(148, 163, 184, 0.22); color: #94A3B8;">
+                <i class="fa-solid fa-paste text-[10px] mr-1"></i>Paste Raw Text
+            </button>
+        </div>
+
         <form id="prompt-form" onsubmit="handlePromptSubmit(event)" class="idea-surface-card rounded-2xl p-1.5 flex items-center space-x-2">
             <div id="prompt-mode-pill" class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wide flex items-center space-x-1.5 shrink-0 transition-colors" style="background: rgba(14, 116, 144, 0.28); color: #38BDF8;">
                 <i id="prompt-mode-icon" class="fa-solid fa-magnifying-glass text-[10px]"></i>
@@ -397,7 +492,7 @@
                 type="text"
                 placeholder="Ask your knowledge, or paste a source URL…"
                 autocomplete="off"
-                oninput="updatePromptModeIndicator()"
+                oninput="updatePromptModeIndicator(); preprocessPromptTokens(this.value)" onfocus="preprocessPromptTokens(this.value)"
                 class="flex-1 bg-transparent px-2 py-1.5 text-sm focus:outline-none"
                 style="color: #F8FAFC;"
             >

@@ -201,6 +201,27 @@
             const pTex = getParticleTexture();
             this.blackHoleGroup = new THREE.Group();
             this.blackHoleGroup.position.set(-22, 0, 0);
+            const coreGeo = new THREE.SphereGeometry(2.0, 32, 32);
+            const coreMat = new THREE.MeshStandardMaterial({ color: 0x02040a, roughness: 0.9, metalness: 0.1 });
+            this.blackHoleCore = new THREE.Mesh(coreGeo, coreMat);
+            this.blackHoleGroup.add(this.blackHoleCore);
+            const photonGeo = new THREE.TorusGeometry(2.15, 0.08, 24, 96);
+            const photonMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+            this.bhPhotonRing = new THREE.Mesh(photonGeo, photonMat);
+            this.bhPhotonRing.rotation.y = Math.PI * 0.42;
+            this.blackHoleGroup.add(this.bhPhotonRing);
+            const disk1Geo = new THREE.RingGeometry(2.4, 4.8, 64);
+            const disk1Mat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.36, depthWrite: false, blending: THREE.AdditiveBlending });
+            this.bhDisk1 = new THREE.Mesh(disk1Geo, disk1Mat);
+            this.bhDisk1.rotation.x = Math.PI * 0.38;
+            this.bhDisk1.rotation.y = 0.25;
+            this.blackHoleGroup.add(this.bhDisk1);
+            const disk2Geo = new THREE.RingGeometry(2.8, 5.4, 64);
+            const disk2Mat = new THREE.MeshBasicMaterial({ color: 0x60a5fa, side: THREE.DoubleSide, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending });
+            this.bhDisk2 = new THREE.Mesh(disk2Geo, disk2Mat);
+            this.bhDisk2.rotation.x = -Math.PI * 0.32;
+            this.bhDisk2.rotation.z = 0.4;
+            this.blackHoleGroup.add(this.bhDisk2);
             const hitGeo = new THREE.SphereGeometry(3.4, 16, 16);
             const hitMat = new THREE.MeshBasicMaterial({ visible: false, wireframe: true });
             this.blackHoleHitMesh = new THREE.Mesh(hitGeo, hitMat);
@@ -214,9 +235,9 @@
             this.blackHoleGroup.add(this.blackHoleHitMesh);
             const glowTex = createGlowTexture(0x38bdf8);
             if (glowTex) {
-                const glowMat = new THREE.SpriteMaterial({ map: glowTex, color: 0x38bdf8, transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false });
+                const glowMat = new THREE.SpriteMaterial({ map: glowTex, color: 0x38bdf8, transparent: true, opacity: 0.48, blending: THREE.AdditiveBlending, depthWrite: false });
                 const glowSprite = new THREE.Sprite(glowMat);
-                glowSprite.scale.set(11.0, 11.0, 1);
+                glowSprite.scale.set(11.5, 11.5, 1);
                 this.blackHoleGroup.add(glowSprite);
             }
             const pCount = 560;
@@ -255,6 +276,22 @@
             const pTex = getParticleTexture();
             this.whiteHoleGroup = new THREE.Group();
             this.whiteHoleGroup.position.set(22, 0, 0);
+            const coreGeo = new THREE.SphereGeometry(1.75, 32, 32);
+            const coreMat = new THREE.MeshStandardMaterial({ color: 0xecfeff, emissive: 0x2dd4bf, emissiveIntensity: 0.85, roughness: 0.15 });
+            this.whiteHoleCore = new THREE.Mesh(coreGeo, coreMat);
+            this.whiteHoleGroup.add(this.whiteHoleCore);
+            const ring1Geo = new THREE.TorusGeometry(2.7, 0.06, 20, 96);
+            const ring1Mat = new THREE.MeshBasicMaterial({ color: 0x2dd4bf, transparent: true, opacity: 0.72, blending: THREE.AdditiveBlending });
+            this.whRing1 = new THREE.Mesh(ring1Geo, ring1Mat);
+            this.whRing1.rotation.x = Math.PI * 0.35;
+            this.whRing1.rotation.y = -0.3;
+            this.whiteHoleGroup.add(this.whRing1);
+            const ring2Geo = new THREE.TorusGeometry(3.5, 0.045, 20, 96);
+            const ring2Mat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.48, blending: THREE.AdditiveBlending });
+            this.whRing2 = new THREE.Mesh(ring2Geo, ring2Mat);
+            this.whRing2.rotation.x = -Math.PI * 0.28;
+            this.whRing2.rotation.z = 0.35;
+            this.whiteHoleGroup.add(this.whRing2);
             const hitGeo = new THREE.SphereGeometry(3.4, 16, 16);
             const hitMat = new THREE.MeshBasicMaterial({ visible: false, wireframe: true });
             this.whiteHoleHitMesh = new THREE.Mesh(hitGeo, hitMat);
@@ -268,9 +305,9 @@
             this.whiteHoleGroup.add(this.whiteHoleHitMesh);
             const glowTex = createGlowTexture(0x2dd4bf);
             if (glowTex) {
-                const glowMat = new THREE.SpriteMaterial({ map: glowTex, color: 0x2dd4bf, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false });
+                const glowMat = new THREE.SpriteMaterial({ map: glowTex, color: 0x2dd4bf, transparent: true, opacity: 0.52, blending: THREE.AdditiveBlending, depthWrite: false });
                 const glowSprite = new THREE.Sprite(glowMat);
-                glowSprite.scale.set(11.5, 11.5, 1);
+                glowSprite.scale.set(12.0, 12.0, 1);
                 this.whiteHoleGroup.add(glowSprite);
             }
             const pCount = 560;
@@ -308,9 +345,9 @@
         buildArenaPlanes() {
             this.ringGroups = [];
             this.rings = [
-                { id: "ring_terms", x: -8.5, radius: 4.8, rotY: -0.62, rotX: 0.11, speed: 0.0028, type: "TERM", color: 0x38bdf8, label: "Domain Terms" },
-                { id: "ring_concepts", x: 0.0, radius: 5.2, rotY: -0.62, rotX: 0.11, speed: -0.0022, type: "CONCEPT", color: 0x60a5fa, label: "Concepts & Entities" },
-                { id: "ring_claims", x: 8.5, radius: 4.8, rotY: -0.62, rotX: 0.11, speed: 0.0025, type: "CLAIM", color: 0xa78bfa, label: "Grounded Claims" }
+                { id: "ring_terms", x: -8.5, radius: 4.8, rotY: -0.62, rotX: 0.11, speed: 0.0028, type: "TERM", key: "term", color: 0x38bdf8, colorHex: "#38bdf8", label: "LAYER 01 · TERMS" },
+                { id: "ring_concepts", x: 0.0, radius: 5.2, rotY: -0.62, rotX: 0.11, speed: -0.0022, type: "CONCEPT", key: "concept", color: 0x60a5fa, colorHex: "#60a5fa", label: "LAYER 02 · CONCEPTS & ENTITIES" },
+                { id: "ring_claims", x: 8.5, radius: 4.8, rotY: -0.62, rotX: 0.11, speed: 0.0025, type: "CLAIM", key: "claim", color: 0x2dd4bf, colorHex: "#2dd4bf", label: "LAYER 03 · GROUNDED CLAIMS" }
             ];
             this.rings.forEach(ringCfg => {
                 const group = new THREE.Group();
@@ -323,7 +360,7 @@
                 const planeMat = new THREE.MeshBasicMaterial({
                     color: ringCfg.color,
                     transparent: true,
-                    opacity: 0.055,
+                    opacity: 0.075,
                     side: THREE.DoubleSide,
                     depthWrite: false,
                     blending: THREE.AdditiveBlending
@@ -334,7 +371,7 @@
                 const edgesMat = new THREE.LineBasicMaterial({
                     color: ringCfg.color,
                     transparent: true,
-                    opacity: 0.15,
+                    opacity: 0.22,
                     blending: THREE.AdditiveBlending
                 });
                 const edgesMesh = new THREE.LineSegments(edgesGeo, edgesMat);
@@ -343,17 +380,17 @@
                 const borderMat = new THREE.LineBasicMaterial({
                     color: ringCfg.color,
                     transparent: true,
-                    opacity: 0.58,
+                    opacity: 0.68,
                     linewidth: 2,
                     blending: THREE.AdditiveBlending
                 });
                 const borderMesh = new THREE.LineSegments(borderGeo, borderMat);
                 group.add(borderMesh);
-                const trackGeo = new THREE.RingGeometry(ringCfg.radius - 0.03, ringCfg.radius + 0.03, 64);
+                const trackGeo = new THREE.RingGeometry(ringCfg.radius - 0.04, ringCfg.radius + 0.04, 64);
                 const trackMat = new THREE.MeshBasicMaterial({
                     color: ringCfg.color,
                     transparent: true,
-                    opacity: 0.22,
+                    opacity: 0.34,
                     side: THREE.DoubleSide,
                     depthWrite: false,
                     blending: THREE.AdditiveBlending
@@ -364,6 +401,11 @@
                 this.ringGroups.push({
                     cfg: ringCfg,
                     group: group,
+                    planeMat: planeMat,
+                    edgesMat: edgesMat,
+                    borderMat: borderMat,
+                    trackMat: trackMat,
+                    headerAnchor: new THREE.Vector3(0, planeH * 0.5 + 0.9, 0),
                     currentAngle: 0
                 });
             });
@@ -412,14 +454,60 @@
             this.container.style.position = "relative";
             this.container.appendChild(this.labelsOverlay);
             this.labelElements = new Map();
+            this.layerHeaderElements = [];
         }
         updateLabels() {
             if (!this.labelsOverlay || !this.camera) return;
             const maxVisible = 20;
-            let visibleCount = 0;
             const tempVec = new THREE.Vector3();
             const width = this.container.clientWidth || window.innerWidth;
             const height = this.container.clientHeight || window.innerHeight;
+            if (this.ringGroups && this.ringGroups.length > 0) {
+                if (!this.layerHeaderElements || this.layerHeaderElements.length !== this.ringGroups.length) {
+                    this.layerHeaderElements = this.ringGroups.map((ringInfo) => {
+                        const hdr = document.createElement("div");
+                        hdr.className = "idea-arena-layer-header";
+                        hdr.textContent = ringInfo.cfg.label;
+                        Object.assign(hdr.style, {
+                            position: "absolute",
+                            fontSize: "10px",
+                            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                            fontWeight: "700",
+                            letterSpacing: "0.08em",
+                            padding: "3px 9px",
+                            borderRadius: "9999px",
+                            background: "rgba(5, 7, 15, 0.86)",
+                            backdropFilter: "blur(8px)",
+                            border: "1px solid " + ringInfo.cfg.colorHex,
+                            color: ringInfo.cfg.colorHex,
+                            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.65)",
+                            transform: "translate(-50%, -50%)",
+                            whiteSpace: "nowrap",
+                            pointerEvents: "none",
+                            transition: "opacity 0.2s ease"
+                        });
+                        this.labelsOverlay.appendChild(hdr);
+                        return hdr;
+                    });
+                }
+                this.ringGroups.forEach((ringInfo, idx) => {
+                    const hdr = this.layerHeaderElements[idx];
+                    if (!hdr) return;
+                    const worldAnchor = ringInfo.headerAnchor.clone().applyEuler(ringInfo.group.rotation).add(ringInfo.group.position);
+                    worldAnchor.project(this.camera);
+                    if (worldAnchor.z > 1) {
+                        hdr.style.display = "none";
+                        return;
+                    }
+                    const sx = (worldAnchor.x * 0.5 + 0.5) * width;
+                    const sy = (-worldAnchor.y * 0.5 + 0.5) * height;
+                    hdr.style.left = `${sx}px`;
+                    hdr.style.top = `${sy}px`;
+                    hdr.style.display = "block";
+                    const isLayerActive = this.activeLayerFilter === "all" || this.activeLayerFilter === "proposed" || this.activeLayerFilter === ringInfo.cfg.key;
+                    hdr.style.opacity = isLayerActive ? "0.95" : "0.24";
+                });
+            }
             const prioritized = [];
             this.nodes.forEach((nodeRecord, id) => {
                 const isPrioritized = this.tracedNodeId === id || this.activeTracePath.has(id) || this.highlightedNodeIds.has(id) || nodeRecord.isProposed;
@@ -453,6 +541,7 @@
                     if (nodeRecord.isProposed) prefix = "◌ ";
                     const rawName = nodeRecord.data.name || nodeRecord.data.statement || id;
                     el.textContent = prefix + (rawName.length > 22 ? rawName.slice(0, 21) + "…" : rawName);
+                    const cleanHex = String((nodeRecord.baseColor || 0x38bdf8).toString(16).padStart(6, '0')).replace(/^#/, '');
                     Object.assign(el.style, {
                         position: "absolute",
                         fontSize: "11px",
@@ -462,7 +551,7 @@
                         borderRadius: "8px",
                         background: "rgba(8, 13, 26, 0.86)",
                         backdropFilter: "blur(8px)",
-                        border: "1px solid #" + nodeRecord.baseColor.toString(16).padStart(6, '0').replace(/^#/, '38bdf8'),
+                        border: "1px solid #" + cleanHex,
                         color: "#F8FAFC",
                         boxShadow: "0 4px 14px rgba(0, 0, 0, 0.55)",
                         transform: "translate(-50%, -130%)",
@@ -492,7 +581,7 @@
                 } else {
                     el.style.opacity = "0.95";
                 }
-                el.style.borderColor = "rgba(" + [(nodeRecord.baseColor>>16)&255, (nodeRecord.baseColor>>8)&255, nodeRecord.baseColor&255].join(',') + ", 0.38)";
+                el.style.borderColor = "rgba(" + [(nodeRecord.baseColor>>16)&255, (nodeRecord.baseColor>>8)&255, nodeRecord.baseColor&255].join(',') + ", 0.45)";
             });
         }
         bindEvents() {
@@ -567,30 +656,50 @@
         }
         resolveRingIndex(nodeType) {
             const t = (nodeType || "").toUpperCase();
-            if (t === "TERM") return 0;
-            if (t === "CLAIM") return 2;
+            if (t === "TERM" || t === "JARGON") return 0;
+            if (t === "CLAIM" || t === "WIKI") return 2;
             return 1;
         }
         setLayerFilter(filterType) {
-            this.activeLayerFilter = filterType;
-            if (filterType === 'all') {
-                this.clearTrace();
+            const normalized = filterType === "jargon" ? "term" : filterType === "concepts" || filterType === "entities" ? "concept" : filterType === "wiki" ? "claim" : (filterType || "all");
+            this.activeLayerFilter = normalized;
+            if (this.ringGroups) {
+                this.ringGroups.forEach(ringInfo => {
+                    const active = normalized === "all" || normalized === "proposed" || normalized === ringInfo.cfg.key;
+                    if (ringInfo.planeMat) ringInfo.planeMat.opacity = active ? 0.085 : 0.018;
+                    if (ringInfo.edgesMat) ringInfo.edgesMat.opacity = active ? 0.24 : 0.05;
+                    if (ringInfo.borderMat) ringInfo.borderMat.opacity = active ? 0.72 : 0.16;
+                    if (ringInfo.trackMat) ringInfo.trackMat.opacity = active ? 0.36 : 0.08;
+                });
+            }
+            if (normalized === 'all') {
+                this.nodes.forEach((n) => {
+                    n.layerMatch = true;
+                    n.mesh.material.opacity = 0.95;
+                    n.mesh.material.emissiveIntensity = n.isProposed ? 0.45 : 0.25;
+                    n.mesh.scale.set(1.0, 1.0, 1.0);
+                    if (n.glowSprite) n.glowSprite.material.opacity = 0.65;
+                    if (n.wireframe) n.wireframe.material.opacity = 0.65;
+                });
+                this.edges.forEach(e => {
+                    e.line.material.opacity = e.isProposed ? 0.75 : 0.45;
+                });
                 return;
             }
             this.nodes.forEach((n) => {
                 let match = false;
                 const t = (n.data.node_type || "").toUpperCase();
-                if (filterType === 'term' && t === "TERM") match = true;
-                if (filterType === 'concept' && (t === "CONCEPT" || t === "ENTITY")) match = true;
-                if (filterType === 'claim' && t === "CLAIM") match = true;
-                if (filterType === 'proposed' && n.isProposed) match = true;
+                if (normalized === 'term' && t === "TERM") match = true;
+                if (normalized === 'concept' && (t === "CONCEPT" || t === "ENTITY")) match = true;
+                if (normalized === 'claim' && (t === "CLAIM" || t === "WIKI")) match = true;
+                if (normalized === 'proposed' && n.isProposed) match = true;
                 n.layerMatch = match;
                 if (match) {
                     n.mesh.material.opacity = 0.95;
-                    n.mesh.material.emissiveIntensity = n.isProposed ? 0.45 : 0.25;
-                    n.mesh.scale.set(1.0, 1.0, 1.0);
-                    if (n.glowSprite) n.glowSprite.material.opacity = 0.55;
-                    if (n.wireframe) n.wireframe.material.opacity = 0.55;
+                    n.mesh.material.emissiveIntensity = n.isProposed ? 0.5 : 0.35;
+                    n.mesh.scale.set(1.12, 1.12, 1.12);
+                    if (n.glowSprite) n.glowSprite.material.opacity = 0.75;
+                    if (n.wireframe) n.wireframe.material.opacity = 0.75;
                 } else {
                     n.mesh.material.opacity = 0.15;
                     n.mesh.material.emissiveIntensity = 0.05;
@@ -603,7 +712,7 @@
                 const src = this.nodes.get(e.sourceId);
                 const tgt = this.nodes.get(e.targetId);
                 if ((src && src.layerMatch) || (tgt && tgt.layerMatch)) {
-                    e.line.material.opacity = e.isProposed ? 0.7 : 0.4;
+                    e.line.material.opacity = e.isProposed ? 0.75 : 0.45;
                 } else {
                     e.line.material.opacity = 0.05;
                 }
@@ -637,6 +746,7 @@
                 this.labelsOverlay.innerHTML = "";
             }
             this.labelElements.clear();
+            this.layerHeaderElements = [];
             const rawConcepts = stateData.concepts || [];
             const rawRelations = stateData.relations || [];
             const rawClaims = stateData.claims || [];
@@ -1209,6 +1319,10 @@
                 }
                 this.bhVortexParticles.geometry.attributes.position.needsUpdate = true;
             }
+            if (this.bhDisk1) this.bhDisk1.rotation.z += delta * 0.45 * spdMult;
+            if (this.bhDisk2) this.bhDisk2.rotation.z -= delta * 0.32 * spdMult;
+            if (this.whRing1) this.whRing1.rotation.z += delta * 0.38 * spdMult;
+            if (this.whRing2) this.whRing2.rotation.y -= delta * 0.28 * spdMult;
             if (this.whiteHoleGroup && this.whFountainParticles) {
                 const pos = this.whFountainParticles.geometry.attributes.position.array;
                 for (let i = 0; i < this.whFountainData.length; i++) {
