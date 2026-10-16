@@ -54,27 +54,29 @@ Project IDEA enforces strict separation of concerns across three decoupled runti
 flowchart LR
     subgraph Tier1["Tier 1 · Frontend (frontend/ :3000)"]
         Prompt["Unified Prompt<br/>(Question or URL + Question)"]
-        Scene["Continuous 3D WebGL Space<br/>Black Hole ⇢ 3 Orbital Rings ⇢ White Hole"]
+        Scene["Continuous 3D WebGL Space<br/>Black Hole ⇢ Stratified Orbital Rings ⇢ White Hole"]
         Cards["2D Overlay Cards<br/>Knowledge Card · Trace to Source · Diff Review"]
     end
 
     subgraph Tier2["Tier 2 · Backend Orchestrator (backend/ :8000)"]
         Ingest["DocumentIngester<br/>SSRF Guard · HTML/Text Anchor Parser"]
-        Store["KnowledgeStore<br/>Session Graph · Living Wiki · Staged ChangeSets"]
+        Store["KnowledgeStore<br/>4-Layer Session Graph · Living Wiki · Staged ChangeSets"]
         Orchestrator["ModelServiceClient<br/>REST Loop & Execution Guardrails"]
     end
 
     subgraph Tier3["Tier 3 · Model Agent Service (model/ :8001)"]
         QueryEP["POST /api/v1/query<br/>Read-Only Grounded QA (mutated_wiki=False)"]
+        JargonEP["POST /api/v1/jargon-scan<br/>Gemini 3.8 Flash Jargon Pre-Scan"]
         Turn1["POST /api/v1/extract<br/>Gemini 4 Argon Turn 1 (Interactions API)"]
-        Validator["POST /api/v1/verify-quote<br/>Deterministic Verbatim Quote Validator"]
+        Validator["POST /api/v1/verify-quote<br/>Deterministic Verbatim Quote & Injection Validator"]
         Turn2["POST /api/v1/correct<br/>Argon Turn 2 Repair (previous_interaction_id)"]
         Builder["POST /api/v1/build-changeset<br/>Staged ChangeSet & Conflict Gate"]
     end
 
-    Prompt -->|"GET /api/state · POST /api/query<br/>POST /api/assimilate"| Orchestrator
+    Prompt -->|"GET /api/state · POST /api/query<br/>POST /api/jargon-scan · POST /api/assimilate"| Orchestrator
     Cards -->|"POST /api/changesets/{id}/approve<br/>POST /api/changesets/{id}/reject"| Store
     Orchestrator -->|"Read-Only Query"| QueryEP
+    Orchestrator -->|"Stage-1 Fast Scan"| JargonEP
     Orchestrator --> Ingest
     Orchestrator -->|"1. Extract & Align"| Turn1
     Turn1 -->|"Check Verbatim Quotes"| Validator
@@ -89,12 +91,12 @@ flowchart LR
 
 | Scope / Stage | Responsibility | Component / Model | `thinking_level` | Verification Gate |
 | :--- | :--- | :--- | :---: | :--- |
-| **Runtime (Stage 1)** | Source Ingestion, Section Anchor Parsing & Jargon (`TERM`) Candidate Identification | `backend/ingest.py` + `gemini-4-argon` | Deterministic + `medium` | SSRF/private-IP & binary payload blocking (`2 MB` cap), section anchor extraction, domain acronym/jargon separation (`JargonScanResult`) |
+| **Runtime (Stage 1)** | Source Ingestion, Section Anchor Parsing & Fast Jargon (`TERM`) Candidate Scan | `backend/ingest.py` + `gemini-3.8-flash` (`scan_jargon_flash`) + `gemini-4-argon` | Deterministic + `low`/`medium` | SSRF/private-IP & binary payload blocking (`2 MB` cap), section anchor extraction, domain acronym/jargon separation (`JargonScanResult`) |
 | **Runtime (Stage 2)** | Canonical Concept (`CONCEPT` / `ENTITY`) Alignment & Relation Extraction | `gemini-4-argon` + `validate_semantic_jargon_alignment` | `medium` | Classifies candidates as `MATCH` / `PROPOSE` / `UNRESOLVED`; blocks cross-domain false-friend collisions (`CROSS_DOMAIN_FALSE_FRIENDS`, e.g., OS `Page Table` vs. `PagedAttention`, CPU `Speculative Execution` vs. `Speculative Decoding`) |
 | **Runtime (Stage 3)** | Claim Evidence Extraction, Mechanical Quote Verification & Turn-2 Self-Correction | `EvidenceValidator` + `gemini-4-argon` (`previous_interaction_id`) | `medium` (Turn 1) $\rightarrow$ `high`/`medium` (Turn 2) | Verbatim normalized substring check, adversarial prompt-injection rejection (`detect_prompt_injection`), & referential integrity check; max 1 stateful repair turn before isolating failures as `Blocked` (`REJECTED`) |
-| **Runtime (Stage 4–5)** | Selective Human Approval (`White Hole`) & Same-Session Grounded Query (`Query`) | `backend/store.py` + `gemini-4-argon` | `medium` | Server-side quote re-verification on approval, dangling-reference prevention, idempotent state transitions, and grounded follow-up `Query` citations |
-| **Dev Subagents (`[T1-A]`)** | WebGL 3D Orbital Physics & Raycast Rendering | `gemini-3.8-flash` (`flash`) | `low` / `medium` | Left Black Hole $\rightarrow$ Center 3-ring rotating orbits (`TERM`/`CONCEPT`/`CLAIM`) $\rightarrow$ Right White Hole & hit-testing |
-| **Dev Subagents (`[T1-B]–[T3]`)** | Frontend UI, Backend Guardrails & Model Loop Implementation | `gemini-4-argon` (`pro` / `inherit`) | `high` | Shared contract compliance, mechanical vs. semantic separation, stage-by-stage pipeline implementation (`PipelineTrace`: `jargon_candidates`, `adversarial_flags`, `layer_distribution`) |
+| **Runtime (Stage 4–5)** | Selective Human Approval (`White Hole`), Canonical Remapping & Same-Session Query (`Query`) | `backend/store.py` (`resolve_canonical_concept`) + `gemini-4-argon` | `medium` | Automatic canonical ID remapping on `MATCH`, server-side quote re-verification on approval, 4-layer graph telemetry (`layer_counts`: `jargon`, `concepts`, `entities`, `wiki`), and grounded follow-up `Query` citations |
+| **Dev Subagents (`[T1-A]`)** | WebGL 3D Orbital Physics & Raycast Rendering | `gemini-3.8-flash` (`flash`) | `low` / `medium` | Left Black Hole $\rightarrow$ Center rotating orbits (`TERM`/`CONCEPT`/`ENTITY`/`CLAIM`) $\rightarrow$ Right White Hole & hit-testing |
+| **Dev Subagents (`[T1-B]–[T3]`)** | Frontend UI, Backend Guardrails & Model Loop Implementation | `gemini-4-argon` (`pro` / `inherit`) | `high` | Shared contract compliance, mechanical vs. semantic separation, stage-by-stage pipeline implementation (`PipelineTrace`: `flash_scan_interaction_id`, `jargon_candidates`, `adversarial_flags`, `layer_distribution`) |
 | **Dev Subagents (`[T4]–[T5]`)** | E2E Golden Path Integration & Independent Browser/Deployment Audit | `gemini-4-argon` (`Argon Mid`) | `medium` | Independent verification of `AC-01`–`AC-10`, non-occluding 3D layout, and live Cloud Run audit |
 
 ---
@@ -218,13 +220,15 @@ project-idea/
 | :--- | :--- | :--- |
 | **Frontend (`:3000`)** | `GET /` · `GET /static/*` | Serves the 3D WebGL Semantic Library SPA (`index.html`, `scene_physics.js`, `app.js`) and injects `BACKEND_API_URL`. |
 | **Frontend (`:3000`)** | `GET /health` | Health probe returning frontend tier status and bound backend URL. |
-| **Backend (`:8000`)** | `GET /api/state` | Returns active session `concepts`, `relations`, approved `claims`, and pending `changesets`. |
+| **Backend (`:8000`)** | `GET /api/state` | Returns active session `concepts`, `relations`, approved `claims`, pending `changesets`, `rings_count: 4`, and `layer_counts` (`jargon`, `concepts`, `entities`, `wiki`). |
 | **Backend (`:8000`)** | `POST /api/query` | Executes a read-only grounded query (`QueryRequest` $\rightarrow$ `QueryResponse`) against approved session knowledge (`mutated_wiki = False`). |
+| **Backend (`:8000`)** | `POST /api/jargon-scan` | Runs a fast Stage-1 technical jargon and acronym pre-scan (`gemini-3.8-flash`) with false-friend collision detection (`JargonScanResponse`). |
 | **Backend (`:8000`)** | `POST /api/assimilate` | Ingests a public URL or raw text snippet (`prepare_document`) and orchestrates the 2-turn Model Tier assimilation loop. |
 | **Backend (`:8000`)** | `POST /api/changesets/{id}/approve` | Selectively commits verified proposals (`concept_ids`, `relation_ids`, `claim_ids`) with referential integrity checks into the Living Wiki. |
 | **Backend (`:8000`)** | `POST /api/changesets/{id}/reject` | Rejects a pending `ChangeSet` while preserving existing session knowledge unchanged. |
 | **Backend (`:8000`)** | `POST /api/reset` | Resets the active session store back to the canonical `seed_domain.json` baseline. |
 | **Model (`:8001`)** | `POST /api/v1/query` | Runs Gemini 4 Argon grounded QA (`AssimilationEngine.answer_query`) returning node citations and thought summaries. |
+| **Model (`:8001`)** | `POST /api/v1/jargon-scan` | Runs Gemini 3.8 Flash Stage-1 jargon scanning (`AssimilationEngine.scan_jargon_flash`, `thinking_level="low"`) and flags cross-domain false friends. |
 | **Model (`:8001`)** | `POST /api/v1/verify-quote` | Deterministically verifies verbatim substring existence (`EvidenceValidator.verify_quote`). |
 | **Model (`:8001`)** | `POST /api/v1/extract` | Runs Turn-1 Gemini 4 Argon extraction (`client.interactions.create`) + initial quote check. |
 | **Model (`:8001`)** | `POST /api/v1/correct` | Runs Turn-2 stateful self-correction via `previous_interaction_id` on failed quotes. |
@@ -250,8 +254,8 @@ project-idea/
 | Test Module | Scope & Verification Gates |
 | :--- | :--- |
 | **`tests/test_3tier_rest_loop.py`** | Full 3-tier ASGI loop (`Backend :8000` $\leftrightarrow$ `Model :8001`): Turn-1 hallucination interception, Turn-2 `previous_interaction_id` repair, `Blocked` claim isolation, and full Golden Path (`Pre-Query` $\rightarrow$ `Assimilate` $\rightarrow$ `Selective Approve` $\rightarrow$ `Post-Query`). |
-| **`tests/test_server.py`** | SSRF/private IP & binary PDF (`application/pdf`) rejection with state preservation (`HTTP 422`), selective item-level approval (`concept_ids`, `relation_ids`, `claim_ids`), `HTTP 400` rejection of forced `Blocked`/`UNRESOLVED` claim IDs, and approval idempotency. |
-| **`tests/test_validator.py`** | Unicode NFC + whitespace-normalized verbatim quote verification, empty/hallucinated quote rejection, and graph referential integrity checks (`Relation` endpoints & `FactClaim.concept_id`). |
+| **`tests/test_server.py`** | SSRF/private IP & binary PDF (`application/pdf`) rejection (`HTTP 422`), selective item-level approval (`concept_ids`, `relation_ids`, `claim_ids`), `HTTP 400` rejection of forced `Blocked`/`UNRESOLVED` claim IDs, 4-layer jargon-to-wiki telemetry (`test_four_layer_jargon_to_wiki_and_adversarial_isolation`), and adversarial prompt-injection isolation. |
+| **`tests/test_validator.py`** | Unicode NFC + whitespace-normalized verbatim quote verification, cross-domain false-friend collision detection (`SEMANTIC_JARGON_COLLISION`), adversarial prompt-injection detection (`detect_prompt_injection`), `/api/v1/jargon-scan` Flash endpoint verification, and graph referential integrity checks. |
 | **`tests/test_ingest.py`** | Deterministic HTML extraction (`BeautifulSoup`), boilerplate stripping, and section heading anchor (`#anchor`) attribution. |
 
 ### Product Acceptance Criteria (`PRD.md` AC-01 – AC-10)
